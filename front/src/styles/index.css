@@ -1,0 +1,53 @@
+
+
+@import url("https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@400;600;700&display=swap");
+
+ html,
+body,
+#root,
+.app,
+.content {
+  height: 100%;
+  width: 100%;
+  font-family: "Source Sans Pro", sans-serif;
+  font-family: "Poppins", "Source Sans Pro", sans-serif;
+} 
+
+
+.app {
+  display: flex;
+  position: relative;
+  height: 100vh;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  /* background: url('../../src/Components/Assets/bg.jpg') no-repeat; */
+  background-size: cover;
+  background-position: center;
+  flex: 1;
+  overflow: auto;
+
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+  background: #e0e0e0;
+}
+
+/* Handle */
+::-webkit-scrollbar-thumb {
+  background: #888;
+}
+
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
