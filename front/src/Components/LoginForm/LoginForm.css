@@ -1,6 +1,6 @@
 /* Global styles */
 .app.login-page .content {
-    background-image: url('../../Components/Assets/tec.png');
+    background-image: url('../../Components/Assets/LED\ lighting.jpg');
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
@@ -49,10 +49,10 @@
     background: transparent;
     border: none;
     outline: none;
-    border: 2px solid #ffffff80; /* Slightly lighter border */
+    border: 2px solid #ff7300fd; /* Slightly lighter border */
     border-radius: 25px; /* Rounded corners */
     font-size: 16px;
-    color: white;
+    color: rgb(0, 0, 0);
     padding: 15px 20px; /* Reduced padding for a more compact look */
     -webkit-appearance: none; /* Remove default styling on macOS */
     -moz-appearance: none; /* Remove default styling on Firefox */
@@ -73,7 +73,7 @@
     top: 50%;
     transform: translateY(-50%);
     font-size: 20px; /* Larger icon for better visibility */
-    color: #aaa; /* Lighter icon color */
+    color: #aaaaaa; /* Lighter icon color */
 }
 
 .wrapper .remember-forgot {
@@ -115,7 +115,7 @@
     font-size: 14px;
     text-align: center;
     margin: 20px 0;
-    color: #fffefe;
+    color: #424242;
 }
 
 .register-link p a {
