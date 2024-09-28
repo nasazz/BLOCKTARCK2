@@ -9,6 +9,13 @@ import LineChart from "../../Components/LineChart";
 import StatBox from "../../Components/StatBox";
 import { importBlockedStockData, getBlockedStockData, getMissingFieldsCount, deleteAllBlockedStockData } from '../../Services/BlockedStockService';
 import { groupBy, sumBy } from 'lodash';
+import MockData from "../../data/mockData.js";
+import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
+
+// Function to format numbers with period as thousands separator
+const formatNumber = (number) => {
+  return new Intl.NumberFormat('de-DE').format(number);
+};
 
 const HOME = () => {
   const theme = useTheme();
@@ -17,7 +24,6 @@ const HOME = () => {
   const [blockedStockData, setBlockedStockData] = useState([]);
   const [chartData, setChartData] = useState([]);
   const [totalValue, setTotalValue] = useState(0);
-  const [teamTransactions, setTeamTransactions] = useState([]);
   const [missingFieldsCount, setMissingFieldsCount] = useState(0);
   const [userRole, setUserRole] = useState('');
 
@@ -37,27 +43,18 @@ const HOME = () => {
         const total = sumBy(data, 'value');
         setTotalValue(total);
 
-        const aggregatedData = aggregateDataByMonth(data);
-        const sortedData = aggregatedData.sort((a, b) => a.month - b.month);
+        const aggregatedData = aggregateDataByWeek(data);
+        const sortedData = aggregatedData.sort((a, b) => a.week - b.week);
         const transformedData = [
           {
             id: "blocked_stock",
             data: sortedData.map(item => ({
-              x: item.month,
+              x: item.week,
               y: item.value,
             })),
           },
         ];
         setChartData(transformedData);
-
-        const teamData = groupBy(data, 'team');
-        const teamTransactions = Object.keys(teamData).map((team) => ({
-          txId: "Team",
-          user: team,
-          date: new Date().toLocaleDateString(),
-          cost: sumBy(teamData[team], 'value'),
-        }));
-        setTeamTransactions(teamTransactions);
 
         const missingCount = await getMissingFieldsCount();
         setMissingFieldsCount(missingCount);
@@ -69,17 +66,27 @@ const HOME = () => {
     fetchBlockedStockData();
   }, []);
 
-  const aggregateDataByMonth = (data) => {
-    const groupedData = groupBy(data, (item) => {
+  const aggregateDataByWeek = (data) => {
+    // Filtrer uniquement les données de l'année 2024
+    
+    const filteredData = data.filter(item => {
       const date = new Date(item.createdOn);
-      return `${date.getFullYear()}-${date.getMonth() + 1}`;
+      return date.getFullYear() === 2024;
     });
-
+  
+    // Grouper par numéro de semaine
+    const groupedData = groupBy(filteredData, (item) => {
+      const date = new Date(item.createdOn);
+      const week = Math.ceil(((date - new Date(date.getFullYear(), 0, 1)) / 86400000 + 1) / 7);
+      return week; // Retourne uniquement le numéro de la semaine
+    });
+  
+    // Retourner les données agrégées
     return Object.keys(groupedData).map(key => {
       const values = groupedData[key];
       return {
-        month: new Date(`${key}-01`),
-        value: sumBy(values, 'value'),
+        week: parseInt(key, 10), // Convertit la clé (numéro de la semaine) en entier
+        value: sumBy(values, 'value'), // Calcule la somme des valeurs pour cette semaine
       };
     });
   };
@@ -95,27 +102,18 @@ const HOME = () => {
         const total = sumBy(data, 'value');
         setTotalValue(total);
 
-        const aggregatedData = aggregateDataByMonth(data);
-        const sortedData = aggregatedData.sort((a, b) => a.month - b.month);
+        const aggregatedData = aggregateDataByWeek(data);
+        const sortedData = aggregatedData.sort((a, b) => a.week - b.week);
         const transformedData = [
           {
             id: "blocked_stock",
             data: sortedData.map(item => ({
-              x: item.month,
+              x: item.week,
               y: item.value,
             })),
           },
         ];
         setChartData(transformedData);
-
-        const teamData = groupBy(data, 'team');
-        const teamTransactions = Object.keys(teamData).map((team) => ({
-          txId: "Team",
-          user: team,
-          date: new Date().toLocaleDateString(),
-          cost: sumBy(teamData[team], 'value'),
-        }));
-        setTeamTransactions(teamTransactions);
 
         const missingCount = await getMissingFieldsCount();
         setMissingFieldsCount(missingCount);
@@ -135,7 +133,6 @@ const HOME = () => {
       setBlockedStockData([]);
       setChartData([]);
       setTotalValue(0);
-      setTeamTransactions([]);
       setMissingFieldsCount(0);
       console.log("All reports deleted successfully");
     } catch (error) {
@@ -149,7 +146,7 @@ const HOME = () => {
   return (
     <Box m="20px">
       <Box display="flex" justifyContent="space-between" alignItems="center">
-        <Header title="HOME" subtitle="Welcome to your dashboard"  />
+        <Header title="HOME" subtitle="Welcome to your dashboard" />
         <Box display="flex" gap="10px">
           {!isQuality && ( // Hide buttons if user is Quality
             <>
@@ -199,9 +196,81 @@ const HOME = () => {
         gap="20px"
       >
         {/* ROW 1 */}
+        <Box
+          gridColumn="span 3"
+          backgroundColor={colors.primary[100]}
+          display="flex"
+          alignItems="center"
+          justifyContent="center"
+        >
+          <StatBox
+            title={
+              <span style={{ textAlign: 'center', display: 'block' }}>
+                <span style={{ color: colors.orangeAccent[600] }}>
+                  {formatNumber(totalValue)}
+                </span>
+              </span>
+            }
+            subtitle="Total Blocked Stock Value"
+            icon={
+              <AttachMoneyIcon
+                sx={{ color: colors.orangeAccent[600], fontSize: "30px" }}
+              />
+            }
+          />
+        </Box>
+
+        <Box
+          gridColumn="span 3"
+          backgroundColor={colors.primary[100]}
+          display="flex"
+          alignItems="center"
+          justifyContent="center"
+        >
+          <StatBox
+            title={
+              <span style={{ textAlign: 'center', display: 'block' }}>
+                <span style={{ color: colors.orangeAccent[600] }}>
+                  {formatNumber(sumBy(blockedStockData.filter(item => item.team === 'MCA'), 'value'))}
+                </span>
+              </span>
+            }
+            subtitle="Total MCA Team Blocked Stock"
+            icon={
+              <AttachMoneyIcon
+                sx={{ color: colors.orangeAccent[600], fontSize: "30px" }}
+              />
+            }
+          />
+        </Box>
+
+        <Box
+          gridColumn="span 3"
+          backgroundColor={colors.primary[100]}
+          display="flex"
+          alignItems="center"
+          justifyContent="center"
+        >
+          <StatBox
+            title={
+              <span style={{ textAlign: 'center', display: 'block' }}>
+                <span style={{ color: colors.orangeAccent[600] }}>
+                  {formatNumber(sumBy(blockedStockData.filter(item => item.team === 'CAS'), 'value'))}
+                </span>
+              </span>
+            }
+            subtitle="Total CAS Team Blocked Stock"
+            icon={
+              <AttachMoneyIcon
+                sx={{ color: colors.orangeAccent[600], fontSize: "30px" }}
+              />
+            }
+          />
+        </Box>
+
         {!isSupplyChain && ( // Hide the notification box if user is Supply Chain
           <Box
-            gridColumn="span 6"
+            gridColumn="span 3"
             backgroundColor={colors.primary[100]}
             display="flex"
             alignItems="center"
@@ -217,7 +286,7 @@ const HOME = () => {
 
         {/* ROW 2 */}
         <Box
-          gridColumn="span 8"
+          gridColumn="span 12"
           gridRow="span 2"
           backgroundColor={colors.primary[100]}
         >
@@ -234,14 +303,7 @@ const HOME = () => {
                 fontWeight="600"
                 color={colors.orangeAccent[400]}
               >
-                Total Blocked Stock Value
-              </Typography>
-              <Typography
-                variant="h3"
-                fontWeight="bold"
-                color={colors.orangeAccent[500]}
-              >
-                ${totalValue.toFixed(2)}
+                Blocked stock evolution
               </Typography>
             </Box>
             <Box>
@@ -255,58 +317,6 @@ const HOME = () => {
           <Box height="250px" m="-20px 0 0 0">
             <LineChart data={chartData} isDashboard={true} />
           </Box>
-        </Box>
-
-        {/* Transaction Graph */}
-        <Box
-          gridColumn="span 4"
-          gridRow="span 2"
-          backgroundColor={colors.primary[100]}
-          overflow="auto"
-        >
-          <Box
-            display="flex"
-            justifyContent="space-between"
-            alignItems="center"
-            borderBottom={`4px solid ${colors.orangeAccent[500]}`}
-            colors={colors.grey[500]}
-            p="15px"
-          >
-            <Typography color={colors.orangeAccent[500]} variant="h5" fontWeight="600">
-              Blocked Stock per team
-            </Typography>
-          </Box>
-          {teamTransactions.map((transaction, i) => (
-            <Box
-              key={`${transaction.txId}-${i}`}
-              display="flex"
-              justifyContent="space-between"
-              alignItems="center"
-              borderBottom={`4px solid ${colors.primary[800]}`}
-              p="15px"
-            >
-              <Box>
-                <Typography
-                  color={colors.orangeAccent[500]}
-                  variant="h5"
-                  fontWeight="600"
-                >
-                  {transaction.user}
-                </Typography>
-                <Typography color={colors.grey[500]}>
-                  {transaction.txId}
-                </Typography>
-              </Box>
-              <Box color={colors.grey[500]}>{transaction.date}</Box>
-              <Box
-                backgroundColor={colors.orangeAccent[500]}
-                p="5px 10px"
-                borderRadius="4px"
-              >
-                ${transaction.cost.toFixed(2)}
-              </Box>
-            </Box>
-          ))}
         </Box>
       </Box>
     </Box>

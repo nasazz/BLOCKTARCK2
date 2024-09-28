@@ -14,10 +14,15 @@ namespace back.Controllers
     public class BlockedStockController : ControllerBase
     {
         private readonly IBlockedStockService _blockedStockService;
+        private readonly IMRPControllerTeamMappingService _mrpControllerTeamMappingService; // New service
+        private readonly IPnPlantComponentMappingService _pnPlantComponentMappingService; // New service for ComponentOrFG
 
-        public BlockedStockController(IBlockedStockService blockedStockService)
+
+        public BlockedStockController(IBlockedStockService blockedStockService, IMRPControllerTeamMappingService mrpControllerTeamMappingService, IPnPlantComponentMappingService pnPlantComponentMappingService)
         {
             _blockedStockService = blockedStockService;
+            _mrpControllerTeamMappingService = mrpControllerTeamMappingService; // Initialize new service
+            _pnPlantComponentMappingService = pnPlantComponentMappingService; // Initialize new service for ComponentOrFG
         }
 
         // Endpoint to get all blocked stock data
@@ -37,7 +42,6 @@ namespace back.Controllers
         }
 
         // Endpoint to import data from an Excel file
-        // Endpoint to import data from an Excel file
         [HttpPost("import")]
         public async Task<IActionResult> ImportBlockedStockData(IFormFile file)
         {
@@ -53,22 +57,7 @@ namespace back.Controllers
                     await file.CopyToAsync(stream);
                     using (var package = new ExcelPackage(stream))
                     {
-                        var worksheet1 = package.Workbook.Worksheets[0];                                // First sheet for Blocked Stock data
-                        var worksheet2 = package.Workbook.Worksheets[1];                               // Second sheet for PnPlant-ComponentOrFG mapping
-
-                        var pnPlantComponentMapping = new Dictionary<string, string>();
-
-                        // Read the second sheet to populate the mapping dictionary
-                        var rowCountSheet2 = worksheet2.Dimension?.Rows ?? 0;
-                        for (int row = 2; row <= rowCountSheet2; row++)
-                        {
-                            var pnPlant = worksheet2.Cells[row, 1].Text.Trim();
-                            var componentOrFG = worksheet2.Cells[row, 2].Text.Trim();
-                            if (!string.IsNullOrEmpty(pnPlant) && !string.IsNullOrEmpty(componentOrFG))
-                            {
-                                pnPlantComponentMapping[pnPlant] = componentOrFG;
-                            }
-                        }
+                        var worksheet1 = package.Workbook.Worksheets[0]; // Only the first sheet for Blocked Stock data
 
                         var rowCount = worksheet1.Dimension?.Rows ?? 0;
                         if (rowCount <= 2)
@@ -124,6 +113,8 @@ namespace back.Controllers
                                 var globalPortfolioStatus = worksheet1.Cells[row, 34].Text.Trim();
                                 var endOfLifeDateText = worksheet1.Cells[row, 35].Text.Trim();
 
+
+                                // Validate required fields
                                 if (string.IsNullOrEmpty(plant) ||
                                     string.IsNullOrEmpty(material) ||
                                     string.IsNullOrEmpty(batch) ||
@@ -137,6 +128,7 @@ namespace back.Controllers
                                     continue;
                                 }
 
+                                // Parse values
                                 if (!decimal.TryParse(blockedQIStockText, out decimal blockedQIStock))
                                 {
                                     blockedQIStock = 0m;
@@ -156,35 +148,22 @@ namespace back.Controllers
                                 {
                                     lastChange = DateTime.MinValue;
                                 }
-
+                                
                                 if (!DateTime.TryParse(endOfLifeDateText, out DateTime endOfLifeDate))
                                 {
                                     endOfLifeDate = DateTime.MinValue;
                                 }
 
-
-
                                 var pnPlant = $"{material}{plant}";
-                                var team = GetTeamByMRPController(mrpController);
-                                var customID = $"{plant}{pnPlant}{matDocNumber}{blockedQIStock}{storageBin}";
-
-
+                                var team = await _mrpControllerTeamMappingService.GetTeamByMRPControllerAsync(mrpController); // Get team from service
+                                var componentOrFG = await _pnPlantComponentMappingService.GetComponentOrFGByPnPlantAsync(pnPlant); // Get ComponentOrFG
+                                var customID = $"{plant}{pnPlant}";
 
                                 var blockedSinceDays = (blockedStockDate - createdOn).Days;
                                 var blockedSinceMonths = blockedSinceDays / 30;
                                 var blockingPeriodCluster = GetBlockingPeriodCluster(blockedSinceMonths);
 
-
-                                // Fetch existing data by CustomID
-                                var existingBlockedStock = await _blockedStockService.GetBlockedStockByCustomIDAsync(customID);
-
-
-                                // Fetch the ComponentOrFG value based on pnPlant from the mapping
-                                var componentOrFG = pnPlantComponentMapping.ContainsKey(pnPlant)
-                                    ? pnPlantComponentMapping[pnPlant]
-                                    : "Unknown";
-
-
+                                // Create the BlockedStock object
                                 var blockedStock = new BlockedStock
                                 {
                                     Plant = plant,
@@ -229,7 +208,7 @@ namespace back.Controllers
                                     BlockedSinceDays = blockedSinceDays,
                                     BlockedSinceMonths = blockedSinceMonths,
                                     BlockingPeriodCluster = blockingPeriodCluster,
-                                    ComponentOrFG = componentOrFG // Add this value to the model
+                                    ComponentOrFG = componentOrFG
                                 };
 
                                 blockedStockList.Add(blockedStock);
@@ -240,6 +219,7 @@ namespace back.Controllers
                             }
                         }
 
+                        // Save the blocked stock data
                         await _blockedStockService.ImportBlockedStockDataAsync(blockedStockList);
                     }
                 }
@@ -251,6 +231,7 @@ namespace back.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, "Error importing blocked stock data.");
             }
         }
+
         private static string GetBlockingPeriodCluster(int blockedSinceMonths)
         {
             if (blockedSinceMonths <= 1)
@@ -267,68 +248,43 @@ namespace back.Controllers
             }
         }
 
-        private static string GetTeamByMRPController(string mrpController)
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdateBlockedStockData(Guid id, [FromBody] BlockedStock updatedBlockedStock)
         {
-            var mrpToTeamMap = new Dictionary<string, string>
+            if (id != updatedBlockedStock.Id)
             {
-                { "X31", "CAS" }, { "MOS", "CAS" }, { "ADG", "CAS" }, { "AEC", "CAS" },
-                { "AD5", "CAS" }, { "ADP", "MCA" }, { "ADI", "MCA" }, { "ALB", "MCA" },
-                { "AEI", "MCA" }, { "ADW", "CAS" }, { "ADJ", "MCA" }, { "ADF", "MCA" },
-                { "MOE", "MCA" }, { "AD6", "CAS" }, { "ASE", "CAS" }, { "ALC", "MCA" },
-                { "ADH", "CAS" }, { "AD7", "CAS" }, { "MOO", "CAS" }, { "MCE", "MCA" },
-                { "MD1", "MCA" }, { "MOU", "MCA" }, { "MOH", "MCA" }, { "MOR", "CAS" },
-                { "MOJ", "CAS" }, { "MCD", "MCA" }, { "MCR", "MCA" }, { "MOK", "CAS" },
-                { "MOV", "CAS" }, { "MON", "CAS" }, { "MCB", "MCA" }, { "MOI", "CAS" },
-                { "MOL", "CAS" }, { "MCA", "MCA" }, { "MOX", "CAS" }, { "MOW", "CAS" },
-                { "MOT", "CAS" }, { "MNO", "Stamping" }, { "MO3", "CAS" }, { "AED", "CAS" },
-                { "X33", "MCA" }
-            };
-            if (mrpToTeamMap.TryGetValue(mrpController, out var team))
-            {
-                return team;
+                return BadRequest("ID mismatch.");
             }
-            return "Unknown"; // Fallback in case the MRP Controller is not in the map
-        }
-   
-    [HttpPut("{id}")]
-    public async Task<IActionResult> UpdateBlockedStockData(Guid id, [FromBody] BlockedStock updatedBlockedStock)
-    {
-        if (id != updatedBlockedStock.Id)
-        {
-            return BadRequest("ID mismatch.");
+
+            try
+            {
+                await _blockedStockService.UpdateBlockedStockAsync(id, updatedBlockedStock);
+                return Ok(new { Success = true, Message = "Blocked stock data updated successfully." });
+            }
+            catch (KeyNotFoundException)
+            {
+                return NotFound("Blocked stock data not found.");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, "Error updating blocked stock data.");
+            }
         }
 
-        try
+        [HttpGet("missing-fields-count")]
+        public async Task<ActionResult<int>> GetMissingFieldsCount()
         {
-            await _blockedStockService.UpdateBlockedStockAsync(id, updatedBlockedStock);
-            return Ok(new { Success = true, Message = "Blocked stock data updated successfully." });
+            try
+            {
+                var count = await _blockedStockService.GetMissingFieldsCountAsync();
+                return Ok(count);
+            }
+            catch (Exception ex)
+            {
+                // Log exception (if necessary)
+                return StatusCode(StatusCodes.Status500InternalServerError, "Error retrieving missing fields count");
+            }
         }
-        catch (KeyNotFoundException)
-        {
-            return NotFound("Blocked stock data not found.");
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(StatusCodes.Status500InternalServerError, "Error updating blocked stock data.");
-        }
-    }
-
-
-    [HttpGet("missing-fields-count")]
-    public async Task<ActionResult<int>> GetMissingFieldsCount()
-    {
-        try
-        {
-            var count = await _blockedStockService.GetMissingFieldsCountAsync();
-            return Ok(count);
-        }
-        catch (Exception ex)
-        {
-            // Log exception (if necessary)
-            return StatusCode(StatusCodes.Status500InternalServerError, "Error retrieving missing fields count");
-        }
-    }
-
 
         // Endpoint to delete all blocked stock data
         [HttpDelete("delete-all")]

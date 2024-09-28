@@ -46,10 +46,9 @@ const LineChart = ({ data, isDashboard = false }) => {
       colors={['#ff0000']} // Set a fixed color for the lines
       margin={{ top: 50, right: 110, bottom: 50, left: 60 }}
       xScale={{
-        type: "time",
-        format: "%Y-%m-%dT%H:%M:%S.%LZ", // ISO format
-        useUTC: false,
-        precision: "month", // Display monthly precision
+        type: "linear",
+        min: 1,
+        max: 52, // Assuming there are 52 weeks
       }}
       yScale={{
         type: "linear",
@@ -67,13 +66,10 @@ const LineChart = ({ data, isDashboard = false }) => {
         tickSize: 0,
         tickPadding: 5,
         tickRotation: 0,
-        legend: isDashboard ? undefined : "Month",
+        legend: isDashboard ? undefined : "Week",
         legendOffset: 36,
         legendPosition: "middle",
-        format: (value) => new Date(value).toLocaleDateString('en-US', {
-          year: 'numeric',
-          month: 'short',
-        }),
+        format: (value) => `Wk${Math.ceil(value)}`, // Display "Wk1", "Wk2", etc.
       }}
       axisLeft={{
         orient: "left",

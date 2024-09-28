@@ -103,7 +103,7 @@ namespace back.Controllers
         }
 
         [HttpPut("{id}")]
-        [Authorize(Roles = "admin")]
+        //[Authorize(Roles = "admin")]
         public async Task<IActionResult> UpdateUser(Guid id, [FromBody] UserRegisterDto updateDto)
         {
             var user = await _context.Users.FindAsync(id);

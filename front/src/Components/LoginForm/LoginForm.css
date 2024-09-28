@@ -8,7 +8,7 @@
 
 .wrapper {
     width: 420px;
-    background: transparent; /* Dark semi-transparent background for better contrast */
+    background: white; /* Dark semi-transparent background for better contrast */
     border: 2px solid rgba(255, 255, 255, 0.2);
     backdrop-filter: blur(15px); /* Adjusted blur */
     color: white;

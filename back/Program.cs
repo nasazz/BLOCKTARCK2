@@ -91,6 +91,8 @@ builder.Services.AddCors(options =>
 // Register custom services
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IBlockedStockService, BlockedStockService>(); // Ensure you have this service
+builder.Services.AddScoped<IMRPControllerTeamMappingService, MRPControllerTeamMappingService>();
+builder.Services.AddScoped<IPnPlantComponentMappingService, PnPlantComponentMappingService>(); 
 
 var app = builder.Build();
 

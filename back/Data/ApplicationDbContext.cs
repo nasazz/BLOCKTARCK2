@@ -15,7 +15,8 @@ public class ApplicationDbContext : IdentityDbContext<User, IdentityRole<Guid>, 
         public DbSet<Plant> Plants { get; set; }
         public DbSet<BlockedStock> BlockedStocks { get; set; }
         public DbSet<Department> Departments { get; set; } 
-
+        public DbSet<MRPControllerTeamMapping> MRPControllerTeamMappings { get; set; }
+        public DbSet<PnPlantComponentMapping> PnPlantComponentMappings { get; set;}
 
     }
 }

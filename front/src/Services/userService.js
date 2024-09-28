@@ -1,3 +1,6 @@
+
+
+
 // src/services/userService.js
 import api from './api';
 
@@ -20,7 +23,6 @@ export const registerUser = async (userData) => {
     }
 };
 
-// You can add more user-related functions here
 export const getUsers = async () => {
     try {
         const response = await api.get('/User');
