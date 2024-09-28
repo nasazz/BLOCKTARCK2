@@ -122,7 +122,7 @@ const Team = () => {
   return (
     <Box m="20px">
       <Header title="TEAM" subtitle="Managing the Team Members" />
-      <Box display="flex" justifyContent="flex-end" gap="10px" m="20px 0">
+      <Box display="flex" justifyContent="flex-end" gap="10px" m="20px 0" >
         <Stack direction="row" spacing={1}>
           <Button
             variant="contained"
@@ -162,6 +162,7 @@ const Team = () => {
         sx={{
           '& .MuiDataGrid-root': {
             border: 'none',
+            fontSize:'18px'   ,
           },
           '& .MuiDataGrid-cell': {
             borderBottom: 'none',

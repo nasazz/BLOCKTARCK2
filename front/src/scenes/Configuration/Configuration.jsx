@@ -260,7 +260,8 @@ const handleSavePlantComponentClick = async (row) => {
   };
 
   const renderTable = (title, rows, setSelectedRows, selectedRows, columns, addFunction, deleteFunction, updateFunction, name, setName, handleChange, handleAddFunc, handleEditFunc) => (
-    <Box mb={4} p={2} borderRadius={2} bgcolor={colors.primary[400]} boxShadow={`0 4px 6px rgba(0, 0, 0, 0.1)`}>
+    <Box mb={6} p={2} maxWidth="95%" mx="auto" borderRadius={2} bgcolor={colors.primary[400]} boxShadow={`0 2px 4px rgba(0, 0, 0, 0.05)`}>
+
       <Typography variant="h4" sx={{ mb: 2, fontWeight: "bold" }}>
         {title}
       </Typography>
@@ -274,7 +275,7 @@ const handleSavePlantComponentClick = async (row) => {
         />
         <Button
           variant="contained"
-          sx={{ fontSize: '16px', padding: '10px 20px' }}
+          sx={{ fontSize: '16px', padding: '10px 10px' }}
           onClick={() => handleAddFunc(name)}
         >
           Add {title}
@@ -289,7 +290,7 @@ const handleSavePlantComponentClick = async (row) => {
               backgroundColor: selectedRows.length > 0 ? colors.orangeAccent[700] : colors.grey[600],
             },
             fontSize: '16px',
-            padding: '10px 20px'
+            padding: '10px 10px'
           }}
           onClick={() => handleDelete(deleteFunction, selectedRows)}
           disabled={selectedRows.length === 0}
@@ -444,7 +445,8 @@ const handleSavePlantComponentClick = async (row) => {
       )}
 
       {/* MRP Controller/Team Mapping Section */}
-      <Box mb={4} p={2} borderRadius={2} bgcolor={colors.primary[400]} boxShadow={`0 4px 6px rgba(0, 0, 0, 0.1)`}>
+      <Box mb={6} p={2} maxWidth="95%" mx="auto" borderRadius={2} bgcolor={colors.primary[400]} boxShadow={`0 2px 4px rgba(0, 0, 0, 0.05)`}>
+
         <Typography variant="h4" sx={{ mb: 2, fontWeight: "bold" }}>
           MRP Controller/Team Mapping
         </Typography>
@@ -557,7 +559,8 @@ const handleSavePlantComponentClick = async (row) => {
         
       </Box>
 
-      <Box mb={4} p={2} borderRadius={2} bgcolor={colors.primary[400]} boxShadow={`0 4px 6px rgba(0, 0, 0, 0.1)`}>
+      <Box mb={6} p={2} maxWidth="95%" mx="auto" borderRadius={2} bgcolor={colors.primary[400]} boxShadow={`0 2px 4px rgba(0, 0, 0, 0.05)`}>
+
             <Typography variant="h4" sx={{ mb: 2, fontWeight: "bold" }}>
                 PnPlant/Component
             </Typography>

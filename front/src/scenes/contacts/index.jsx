@@ -107,10 +107,12 @@ const Contacts = () => {
     }
   };
 
+  
+
   const columns = [
     { field: 'plant', headerName: 'Plant', flex: 1, minWidth: 150, align: 'center', headerAlign: 'center' },
     { field: 'material', headerName: 'Material', flex: 1, minWidth: 150, align: 'center', headerAlign: 'center' },
-    { field: 'materialDescription', headerName: 'Material Description', flex: 1, minWidth: 200, align: 'center', headerAlign: 'center' },
+    { field: 'materialDescription', headerName: 'Material Description', flex: 1, minWidth: 250, align: 'center', headerAlign: 'center' },
     { field: 'batch', headerName: 'Batch', flex: 1, minWidth: 150, align: 'center', headerAlign: 'center' },
     { field: 'blockedQIStock', headerName: 'Blocked/QI Stock', type: 'number', flex: 1, minWidth: 150, align: 'center', headerAlign: 'center' },
     { field: 'baseUnitOfMeasure', headerName: 'Base Unit of Measure', flex: 1, minWidth: 150, align: 'center', headerAlign: 'center' },
@@ -133,7 +135,7 @@ const Contacts = () => {
       flex: 1,
       minWidth: 200,
       align: 'center',
-      headerAlign: 'center',
+      // headerAlign: 'center',
       renderCell: (params) => (
         <FormControl fullWidth>
           <InputLabel>Unknown</InputLabel>
@@ -192,7 +194,7 @@ const Contacts = () => {
       ),
     },
     {
-      field: 'scrapRequestNo', headerName: 'Scrap Request No.', flex: 1, minWidth: 200, align: 'center', headerAlign: 'center',
+      field: 'scrapRequestNo', headerName: 'Scrap Request No.', flex: 1, minWidth: 200, align: 'center', headerAlign: 'center', 
       renderCell: (params) => (
         <FormControl fullWidth>
           <InputLabel>Unknown</InputLabel>
@@ -221,30 +223,45 @@ const Contacts = () => {
         sx={{
           '& .MuiDataGrid-root': {
             border: 'none',
+            fontSize:'17px'   ,
           },
           '& .MuiDataGrid-cell': {
             borderBottom: 'none',
+            
           },
           '& .MuiDataGrid-columnHeaders': {
             backgroundColor: colors.orangeAccent[500],
             borderBottom: 'none',
-            marginBottom: 0,
+            // marginBottom: 0,
           },
           '& .MuiDataGrid-row': {
-            marginTop: '-1px',
+            
+            // marginTop: '2px',
           },
           '& .MuiDataGrid-virtualScroller': {
             backgroundColor: colors.primary[400],
+            
           },
           '& .MuiDataGrid-footerContainer': {
             borderTop: 'none',
             backgroundColor: colors.orangeAccent[500],
+            
           },
           '& .MuiCheckbox-root': {
             color: `${colors.grey[200]} !important`,
+            
           },
           '& .MuiDataGrid-toolbarContainer .MuiButton-text': {
-            color: `${colors.grey[800]} !important`,
+            color: `${colors.grey[900]} !important`,
+            fontSize:'13px'   ,
+          },
+          '&::-webkit-scrollbar': {
+            height: '12px', // Increase scrollbar height
+          },
+          '&::-webkit-scrollbar-thumb': {
+            backgroundColor: colors.orangeAccent[500],
+            borderRadius: '20px',
+            border: `3px solid ${colors.primary[400]}`, // Add padding around the thumb
           },
         }}
       >
@@ -256,19 +273,6 @@ const Contacts = () => {
           autoHeight={false}
           disableExtendRowFullWidth={true}
           scrollbarSize={10}
-          sx={{
-            '& .MuiDataGrid-columnHeaders': {
-              position: 'sticky',
-              fontSize:'15px'   ,
-              top: 0,
-              zIndex: 1000,
-              backgroundColor: colors.orangeAccent[500],
-              marginBottom: '-55px',
-            },
-            '& .MuiDataGrid-row': {
-              marginTop: '-1px',
-            },
-          }}
         />
       </Box>
     </Box>

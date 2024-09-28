@@ -186,7 +186,7 @@ const Dashboard = () => {
       {/* GRID & CHARTS */}
       <Box
         display="grid"
-        gridTemplateColumns="repeat(12, 1fr)"
+        gridTemplateColumns="repeat(15, 4fr)"
         gridAutoRows="140px"
         gap="20px"
       >
@@ -238,7 +238,6 @@ const Dashboard = () => {
             }
           />
         </Box>
-
         <Box
           gridColumn="span 3"
           backgroundColor={colors.primary[100]}
@@ -262,6 +261,30 @@ const Dashboard = () => {
             }
           />
         </Box>
+        <Box
+          gridColumn="span 3"
+          backgroundColor={colors.primary[100]}
+          display="flex"
+          alignItems="center"
+          justifyContent="center"
+        >
+          <StatBox
+            title={
+              <span style={{ textAlign: 'center', display: 'block' }}>
+                <span style={{ color: colors.orangeAccent[600] }}>
+                  {sumBy(blockedStockData.filter(item => item.team === 'CAS'), 'value').toFixed(2)}
+                </span>
+              </span>
+            }
+            subtitle="Total CAS Team Blocked Stock"
+            icon={
+              <AttachMoneyIcon
+                sx={{ color: colors.orangeAccent[600], fontSize: "30px" }}
+              />
+            }
+          />
+        </Box>
+        
 
         {!isSupplyChain && ( // Hide the notification box if user is Supply Chain
           <Box
@@ -277,11 +300,14 @@ const Dashboard = () => {
               icon={<NotificationsOutlinedIcon sx={{ color: colors.orangeAccent[600], fontSize: "26px" }} />}
             />
           </Box>
+
+          
+
         )}
 
         {/* ROW 2 */}
         <Box
-          gridColumn="span 12"
+          gridColumn="span 15"
           gridRow="span 2"
           backgroundColor={colors.primary[100]}
         >
