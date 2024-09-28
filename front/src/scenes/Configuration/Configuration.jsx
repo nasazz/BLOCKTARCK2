@@ -376,21 +376,21 @@ const handleSavePlantComponentClick = async (row) => {
 
   return (
     <Box>
-      {/* Render Teams */}
-      {renderTable(
+    {/* Render Teams */}
+    {renderTable(
         "Teams",
         teamRows,
         setSelectedTeamRows,
         selectedTeamRows,
-        [{ field: "id", headerName: "ID", width: 90 }, { field: "name", headerName: "Team Name", flex: 1 }],
+        [{ field: "name", headerName: "Name", width: 398 }],
         addTeam,
         deleteTeam,
         updateTeam,
         newTeamName,
         setNewTeamName,
-        setNewTeamName,
-        handleAdd,
-        handleEditClick
+        (value) => setNewTeamName(value),
+        (name) => handleAdd(addTeam, name, setNewTeamName),
+        (id, name) => handleSaveClick(updateTeam, { id, name })
       )}
 
       {/* Render Roles */}
@@ -399,50 +399,50 @@ const handleSavePlantComponentClick = async (row) => {
         rolesRows,
         setSelectedRolesRows,
         selectedRolesRows,
-        [{ field: "id", headerName: "ID", width: 90 }, { field: "name", headerName: "Role Name", flex: 1 }],
+        [{ field: "name", headerName: "Name", width: 398 }],
         addRole,
         deleteRole,
         updateRole,
         newRoleName,
         setNewRoleName,
-        setNewRoleName,
+        (value) => setNewRoleName(value),
         handleAddRole,
         handleEditRole
       )}
 
       {/* Render Plants */}
       {renderTable(
-        "Plants",
+        "Plant",
         plantRows,
         setSelectedPlantRows,
         selectedPlantRows,
-        [{ field: "id", headerName: "ID", width: 90 }, { field: "name", headerName: "Plant Name", flex: 1 }],
+        [{ field: "name", headerName: "Name", width: 398 }],
         addPlant,
         deletePlant,
         updatePlant,
         newPlantName,
         setNewPlantName,
-        setNewPlantName,
-        handleAdd,
-        handleEditClick
+        (value) => setNewPlantName(value),
+        (name) => handleAdd(addPlant, name, setNewPlantName),
+        (id, name) => handleSaveClick(updatePlant, { id, name })
       )}
 
       {/* Render Departments */}
       {renderTable(
-        "Departments",
-        departmentRows,
-        setSelectedDepartmentRows,
-        selectedDepartmentRows,
-        [{ field: "id", headerName: "ID", width: 90 }, { field: "name", headerName: "Department Name", flex: 1 }],
-        addDepartment,
-        deleteDepartment,
-        updateDepartment,
-        newDepartmentName,
-        setNewDepartmentName,
-        setNewDepartmentName,
-        handleAdd,
-        handleEditClick
-      )}
+          "Department",
+          departmentRows,
+          setSelectedDepartmentRows,
+          selectedDepartmentRows,
+          [{ field: "name", headerName: "Name", width: 398 }],
+          addDepartment,
+          deleteDepartment,
+          updateDepartment,
+          newDepartmentName,
+          setNewDepartmentName,
+          (value) => setNewDepartmentName(value),
+          (name) => handleAdd(addDepartment, name, setNewDepartmentName),
+          (id, name) => handleSaveClick(updateDepartment, { id, name })
+        )}
 
       {/* MRP Controller/Team Mapping Section */}
       <Box mb={6} p={2} maxWidth="95%" mx="auto" borderRadius={2} bgcolor={colors.primary[400]} boxShadow={`0 2px 4px rgba(0, 0, 0, 0.05)`}>
