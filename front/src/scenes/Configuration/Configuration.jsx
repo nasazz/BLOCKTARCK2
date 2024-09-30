@@ -304,7 +304,7 @@ const handleSavePlantComponentClick = async (row) => {
           {
             field: "action",
             headerName: "",
-            width: 150,
+            width: 1000,
             sortable: false,
             filterable: false,
             disableColumnMenu: true,
@@ -315,6 +315,8 @@ const handleSavePlantComponentClick = async (row) => {
                   sx={{
                     display: 'flex',
                     alignItems: 'center',
+                    justifyContent: 'space-between', // Ensures content is spread across the row
+                    width: '100%', // Makes the Box take full width
                   }}
                 >
                   {isEditing ? (
@@ -326,18 +328,22 @@ const handleSavePlantComponentClick = async (row) => {
                         sx={{ mr: 1 }}
                         size="small"
                       />
+                       <Box sx={{ display: 'flex', ml: 'auto' }}> {/* Right-aligned save icon */}
                       <IconButton onClick={() => handleSaveClick(updateFunction, params.row)}>
                         <SaveIcon />
                       </IconButton>
+                      </Box>
                     </>
                   ) : (
                     <>
+                     <Box sx={{ display: 'flex', ml: 'auto' }}> {/* Right-aligned edit and delete icons */}
                       <IconButton onClick={() => handleEditClick(params.row)}>
                         <EditIcon />
                       </IconButton>
                       <IconButton onClick={() => handleDelete(deleteFunction, [params.row.id])}>
                         <DeleteIcon />
                       </IconButton>
+                      </Box>
                     </>
                   )}
                 </Box>

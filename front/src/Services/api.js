@@ -9,7 +9,7 @@ const API_URL = 'http://localhost:5091/api'; // Adjust this URL as per your .NET
 
 // Create an Axios instance
 const api = axios.create({
-    baseURL: API_URL,
+    baseURL: 'http://localhost:5091/api',
     headers: {
         'Content-Type': 'application/json'
     }

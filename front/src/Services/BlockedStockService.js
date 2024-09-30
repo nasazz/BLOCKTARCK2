@@ -22,10 +22,28 @@ export const importBlockedStockData = async (file) => {
 export const getBlockedStockData = async () => {
   try {
     const response = await api.get('/BlockedStock');
-    return response.data; // Array of blocked stock data
+    
+    // Log response status and headers for debugging
+    console.log("API Response Status:", response.status);
+    console.log("API Response Data:", response.data);
+
+    // Check if data exists and is valid
+    if (response.status === 200 && Array.isArray(response.data)) {
+      return response.data;  // Return the data if everything is correct
+    } else {
+      console.error('Unexpected API response format:', response);
+      return [];  // Return an empty array as fallback
+    }
+
   } catch (error) {
-    console.error('Error fetching blocked stock data:', error);
-    throw error; // Handle the error in the component
+    // Log detailed error for better debugging
+    if (error.response) {
+      console.error('Error Status:', error.response.status);
+      console.error('Error Data:', error.response.data);
+    } else {
+      console.error('Error Message:', error.message);
+    }
+    throw error;  // Propagate the error to be handled by the component
   }
 };
 
@@ -61,3 +79,36 @@ export const deleteAllBlockedStockData = async () => {
     throw error; // Handle the error in the component
   }
 };
+
+
+// export const getBlockedStockByProductType1 = async () => {
+//   try {
+//       const response = await api.get('/BlockedStock/product-type1');
+//       return response.data;
+//   } catch (error) {
+//       console.error('Error fetching blocked stock by product type 1:', error);
+//       throw error;
+//   }
+// };
+
+// // Function to get blocked stock by product type 2
+// export const getBlockedStockByProductType2 = async () => {
+//   try {
+//       const response = await api.get('/BlockedStock/product-type2');
+//       return response.data;
+//   } catch (error) {
+//       console.error('Error fetching blocked stock by product type 2:', error);
+//       throw error;
+//   }
+// };
+
+// // Function to get blocked stock by processing time
+// export const getBlockedStockByProcessingTime = async () => {
+//   try {
+//       const response = await api.get('/BlockedStock/processing-time');
+//       return response.data;
+//   } catch (error) {
+//       console.error('Error fetching blocked stock by processing time:', error);
+//       throw error;
+//   }
+// };

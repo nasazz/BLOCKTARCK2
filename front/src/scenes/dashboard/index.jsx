@@ -1,25 +1,21 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Box, Button, IconButton, Typography, useTheme } from "@mui/material";
+import { Box, Button, Typography, useTheme } from "@mui/material";
 import { tokens } from "../../theme";
 import DeleteOutline from "@mui/icons-material/DeleteOutline"; // Import the delete icon
-
 import DownloadOutlinedIcon from "@mui/icons-material/DownloadOutlined";
-import EmailIcon from "@mui/icons-material/Email";
 import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
 import NotificationsOutlinedIcon from "@mui/icons-material/NotificationsOutlined";
 import Header from "../../Components/Header.jsx";
 import LineChart from "../../Components/LineChart";
 import StatBox from "../../Components/StatBox";
-import BarChart from "../../Components/BarChart";
-import ProgressCircle from "../../Components/ProgressCircle";
 import PieChart from "../../Components/PieChart";
-import MockData from "../../data/mockData.js";
-import { mockPieData } from '../../data/mockData';
-
-
-
+import { mockPieData } from '../../data/mockData.js'; // Adjust the path accordingly
+import { getBlockedStockByProductType1, getBlockedStockByProductType2, getBlockedStockByProcessingTime } from '../../Services/BlockedStockService.js';
 import { importBlockedStockData, getBlockedStockData, getMissingFieldsCount, deleteAllBlockedStockData } from '../../Services/BlockedStockService';
 import { groupBy, sumBy } from 'lodash';
+
+
+
 
 const Dashboard = () => {
   const theme = useTheme();
@@ -30,6 +26,7 @@ const Dashboard = () => {
   const [totalValue, setTotalValue] = useState(0);
   const [missingFieldsCount, setMissingFieldsCount] = useState(0);
   const [userRole, setUserRole] = useState('');
+
 
   useEffect(() => {
     const fetchUserRole = () => {
@@ -138,12 +135,13 @@ const Dashboard = () => {
   const isQuality = userRole === 'Quality';
   const isSupplyChain = userRole === 'Supply Chain';
 
+
   return (
     <Box m="20px">
       <Box display="flex" justifyContent="space-between" alignItems="center">
         <Header title="DASHBOARD" subtitle="Welcome to your dashboard" />
         <Box display="flex" gap="10px">
-          {!isQuality && ( // Hide buttons if user is Quality
+          {!isQuality && (
             <>
               <Button
                 sx={{
@@ -161,7 +159,6 @@ const Dashboard = () => {
               <input
                 type="file"
                 accept=".xlsx, .xls, .xlsm"
-                ref={fileInputRef}
                 style={{ display: "none" }}
                 onChange={handleFileUpload}
               />
@@ -184,188 +181,88 @@ const Dashboard = () => {
       </Box>
 
       {/* GRID & CHARTS */}
-      <Box
-        display="grid"
-        gridTemplateColumns="repeat(15, 4fr)"
-        gridAutoRows="140px"
-        gap="20px"
-      >
+      <Box display="grid" gridTemplateColumns="repeat(15, 4fr)" gridAutoRows="140px" gap="20px">
         {/* ROW 1 */}
-        <Box
-          gridColumn="span 3"
-          backgroundColor={colors.primary[100]}
-          display="flex"
-          alignItems="center"
-          justifyContent="center"
-        >
+        <Box gridColumn="span 3" backgroundColor={colors.primary[100]} display="flex" alignItems="center" justifyContent="center">
           <StatBox
-            title={
-              <span style={{ textAlign: 'center', display: 'block' }}>
-                <span style={{ color: colors.orangeAccent[600] }}>
-                  {totalValue.toFixed(2)}
-                </span>
-              </span>
-            }
+            title={<span style={{ color: colors.orangeAccent[600] }}>{totalValue.toFixed(2)}</span>}
             subtitle="Total Blocked Stock Value"
-            icon={
-              <AttachMoneyIcon
-                sx={{ color: colors.orangeAccent[600], fontSize: "30px" }}
-              />
-            }
+            icon={<AttachMoneyIcon sx={{ color: colors.orangeAccent[600], fontSize: "30px" }} />}
           />
         </Box>
 
-        <Box
-          gridColumn="span 3"
-          backgroundColor={colors.primary[100]}
-          display="flex"
-          alignItems="center"
-          justifyContent="center"
-        >
+        <Box gridColumn="span 3" backgroundColor={colors.primary[100]} display="flex" alignItems="center" justifyContent="center">
           <StatBox
-            title={
-              <span style={{ textAlign: 'center', display: 'block' }}>
-                <span style={{ color: colors.orangeAccent[600] }}>
-                  {sumBy(blockedStockData.filter(item => item.team === 'MCA'), 'value').toFixed(2)}
-                </span>
-              </span>
-            }
+            title={<span style={{ color: colors.orangeAccent[600] }}>{sumBy(blockedStockData.filter(item => item.team === 'MCA'), 'value').toFixed(2)}</span>}
             subtitle="Total MCA Team Blocked Stock"
-            icon={
-              <AttachMoneyIcon
-                sx={{ color: colors.orangeAccent[600], fontSize: "30px" }}
-              />
-            }
+            icon={<AttachMoneyIcon sx={{ color: colors.orangeAccent[600], fontSize: "30px" }} />}
           />
         </Box>
-        <Box
-          gridColumn="span 3"
-          backgroundColor={colors.primary[100]}
-          display="flex"
-          alignItems="center"
-          justifyContent="center"
-        >
-          <StatBox
-            title={
-              <span style={{ textAlign: 'center', display: 'block' }}>
-                <span style={{ color: colors.orangeAccent[600] }}>
-                  {sumBy(blockedStockData.filter(item => item.team === 'CAS'), 'value').toFixed(2)}
-                </span>
-              </span>
-            }
-            subtitle="Total CAS Team Blocked Stock"
-            icon={
-              <AttachMoneyIcon
-                sx={{ color: colors.orangeAccent[600], fontSize: "30px" }}
-              />
-            }
-          />
-        </Box>
-        <Box
-          gridColumn="span 3"
-          backgroundColor={colors.primary[100]}
-          display="flex"
-          alignItems="center"
-          justifyContent="center"
-        >
-          <StatBox
-            title={
-              <span style={{ textAlign: 'center', display: 'block' }}>
-                <span style={{ color: colors.orangeAccent[600] }}>
-                  {sumBy(blockedStockData.filter(item => item.team === 'CAS'), 'value').toFixed(2)}
-                </span>
-              </span>
-            }
-            subtitle="Total CAS Team Blocked Stock"
-            icon={
-              <AttachMoneyIcon
-                sx={{ color: colors.orangeAccent[600], fontSize: "30px" }}
-              />
-            }
-          />
-        </Box>
-        
 
-        {!isSupplyChain && ( // Hide the notification box if user is Supply Chain
-          <Box
-            gridColumn="span 3"
-            backgroundColor={colors.primary[100]}
-            display="flex"
-            alignItems="center"
-            justifyContent="center"
-          >
+        <Box gridColumn="span 3" backgroundColor={colors.primary[100]} display="flex" alignItems="center" justifyContent="center">
+          <StatBox
+            title={<span style={{ color: colors.orangeAccent[600] }}>{sumBy(blockedStockData.filter(item => item.team === 'CAS'), 'value').toFixed(2)}</span>}
+            subtitle="Total CAS Team Blocked Stock"
+            icon={<AttachMoneyIcon sx={{ color: colors.orangeAccent[600], fontSize: "30px" }} />}
+          />
+        </Box>
+
+        <Box gridColumn="span 3" backgroundColor={colors.primary[100]} display="flex" alignItems="center" justifyContent="center">
+          <StatBox
+            title={<span style={{ color: colors.orangeAccent[600] }}>{sumBy(blockedStockData.filter(item => item.team === 'CAS'), 'value').toFixed(2)}</span>}
+            subtitle="Total CAS Team Blocked Stock"
+            icon={<AttachMoneyIcon sx={{ color: colors.orangeAccent[600], fontSize: "30px" }} />}
+          />
+        </Box>
+
+        {!isSupplyChain && (
+          <Box gridColumn="span 3" backgroundColor={colors.primary[100]} display="flex" alignItems="center" justifyContent="center">
             <StatBox
               title={<span style={{ color: colors.orangeAccent[600] }}>{missingFieldsCount}</span>}
               subtitle="Rows Missing Quality Fields"
               icon={<NotificationsOutlinedIcon sx={{ color: colors.orangeAccent[600], fontSize: "26px" }} />}
             />
           </Box>
+        )}
 
           
 
-        )}
-
         {/* ROW 2 */}
-        <Box
-          gridColumn="span 15"
-          gridRow="span 2"
-          backgroundColor={colors.primary[100]}
-        >
-          <Box
-            mt="25px"
-            p="0 30px"
-            display="flex"
-            justifyContent="space-between"
-            alignItems="center"
-          >
-            <Box>
-              <Typography
-                variant="h5"
-                fontWeight="600"
-                color={colors.orangeAccent[400]}
-              >
-                Line chart per week of the year
-              </Typography>
-            </Box>
+        <Box gridColumn="span 15" gridRow="span 2" backgroundColor={colors.primary[100]}>
+          <Box mt="25px" p="0 30px" display="flex" justifyContent="space-between" alignItems="center">
+            <Typography variant="h5" fontWeight="600" color={colors.orangeAccent[400]}>
+              Line chart per week of the year
+            </Typography>
           </Box>
           <Box height="250px" m="-20px 0 0 0">
             <LineChart data={chartData} isDashboard={true} />
           </Box>
         </Box>
 
-        {/* ROW 3 */}
-
-<Box
-  gridColumn="span 4"
-  gridRow="span 2"
-  backgroundColor={colors.primary[100]}
-  p="30px"
->
-  <Typography variant="h5" fontWeight="600">
-    Pie Chart Example
-  </Typography>
-  <Box height="250px" mt="20px">
-    <PieChart data={mockPieData} />
-  </Box>
-</Box>
-
-
-        <Box
-          gridColumn="span 4"
-          gridRow="span 2"
-          backgroundColor={colors.primary[100]}
-        >
-          <Typography
-            variant="h5"
-            fontWeight="600"
-            sx={{ padding: "30px 30px 0 30px" }}
-          >
-            Sales Quantity
-          </Typography>
-          <Box height="250px" mt="-20px">
-            <BarChart isDashboard={true} />
+        {/* ROW 3: Pie Charts */}
+        <Box gridColumn="span 15" display="flex" justifyContent="space-between" alignItems="flex-start" mt="20px">
+       
+          <Box  flex="1" marginRight="10px" backgroundColor={colors.primary[100]} p="30px">
+            <Typography variant="h5" fontWeight="600">Pie Chart Example 1</Typography>
+            <Box height="250px" mt="20px">
+              <PieChart  data={mockPieData}  />
+            </Box>
           </Box>
-        </Box>
+           
+          <Box flex="1" marginRight="10px" backgroundColor={colors.primary[100]} p="30px">
+            <Typography variant="h5" fontWeight="600">Pie Chart Example 2</Typography>
+            <Box height="250px" mt="20px">
+              <PieChart data={mockPieData}  />
+            </Box>
+          </Box>
+
+          <Box flex="1" backgroundColor={colors.primary[100]} p="30px">
+            <Typography variant="h5" fontWeight="600">Pie Chart Example 3</Typography>
+            <Box height="250px" mt="20px">
+              <PieChart data={mockPieData}  />
+            </Box>
+          </Box>
+        </Box>
       </Box>
     </Box>
   );
