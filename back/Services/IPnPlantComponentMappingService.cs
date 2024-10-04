@@ -11,7 +11,7 @@ namespace back.Services
         Task<List<PnPlantComponentMapping>> GetAllMappingsAsync();
         Task<string> GetComponentOrFGByPnPlantAsync(string pnPlant);
         Task<PnPlantComponentMapping> GetMappingByPnPlantAsync(string pnPlant);
-        
+
         // Method to create a single mapping
         Task<PnPlantComponentMapping> CreateMappingAsync(CreatePnPlantComponentMappingDTO mappingDto);
 
@@ -20,5 +20,8 @@ namespace back.Services
 
         Task<PnPlantComponentMapping> UpdateMappingAsync(Guid id, CreatePnPlantComponentMappingDTO mappingDto);
         Task<bool> DeleteMappingAsync(Guid id);
+        
+        // Method to delete all mappings
+        Task<bool> DeleteAllMappingsAsync();
     }
 }

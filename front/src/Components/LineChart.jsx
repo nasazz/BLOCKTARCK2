@@ -43,22 +43,22 @@ const LineChart = ({ data, isDashboard = false }) => {
           },
         },
       }}
-      colors={['#ff0000']} // Set a fixed color for the lines
+      colors={['#ff0000']}
       margin={{ top: 50, right: 110, bottom: 50, left: 60 }}
       xScale={{
         type: "linear",
         min: 1,
-        max: 52, // Assuming there are 52 weeks
+        max: 52,
       }}
       yScale={{
         type: "linear",
         min: 0,
         max: "auto",
-        stacked: false, // Single line
+        stacked: false,
         reverse: false,
       }}
       yFormat=" >-.2f"
-      curve="catmullRom" // Smooth curve
+      curve="catmullRom"
       axisTop={null}
       axisRight={null}
       axisBottom={{
@@ -69,7 +69,7 @@ const LineChart = ({ data, isDashboard = false }) => {
         legend: isDashboard ? undefined : "Week",
         legendOffset: 36,
         legendPosition: "middle",
-        format: (value) => `Wk${Math.ceil(value)}`, // Display "Wk1", "Wk2", etc.
+        format: (value) => `Wk${Math.ceil(value)}`,
       }}
       axisLeft={{
         orient: "left",
@@ -122,3 +122,4 @@ const LineChart = ({ data, isDashboard = false }) => {
 };
 
 export default LineChart;
+            

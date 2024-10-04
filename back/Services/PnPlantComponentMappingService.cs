@@ -66,11 +66,21 @@ namespace back.Services
                 ComponentOrFG = dto.ComponentOrFG
             }).ToList();
 
-            _context.PnPlantComponentMappings.AddRange(mappings);
-            await _context.SaveChangesAsync();
+            try
+            {
+                await _context.PnPlantComponentMappings.AddRangeAsync(mappings);
+                await _context.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                // Log error details for debugging
+                Console.WriteLine($"Bulk insert error: {ex.Message}");
+                throw; // Consider handling or rethrowing
+            }
 
             return mappings;
         }
+
 
         // Update mapping by Id
         public async Task<PnPlantComponentMapping> UpdateMappingAsync(Guid id, CreatePnPlantComponentMappingDTO mappingDto)
@@ -101,5 +111,20 @@ namespace back.Services
             await _context.SaveChangesAsync();
             return true;
         }
+        // Delete all mappings
+        public async Task<bool> DeleteAllMappingsAsync()
+        {
+            var allMappings = await _context.PnPlantComponentMappings.ToListAsync();
+
+            if (allMappings == null || !allMappings.Any())
+            {
+                return false; // No mappings to delete
+            }
+
+            _context.PnPlantComponentMappings.RemoveRange(allMappings);
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
     }
 }

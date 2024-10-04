@@ -1,6 +1,8 @@
+// PnPlantComponentMappingController.cs
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using back.Services;
 using back.Models;
@@ -19,7 +21,6 @@ namespace back.Controllers
             _service = service;
         }
 
-        // Get all mappings
         [HttpGet]
         public async Task<IActionResult> GetAllMappings()
         {
@@ -27,7 +28,6 @@ namespace back.Controllers
             return Ok(mappings);
         }
 
-        // Get mapping by PnPlant
         [HttpGet("{pnPlant}")]
         public async Task<IActionResult> GetMappingByPnPlant(string pnPlant)
         {
@@ -39,7 +39,18 @@ namespace back.Controllers
             return Ok(mapping);
         }
 
-        // Create single mapping
+        // New method to get ComponentOrFG by PnPlant
+        [HttpGet("{pnPlant}/component-or-fg")]
+        public async Task<IActionResult> GetComponentOrFGByPnPlant(string pnPlant)
+        {
+            var componentOrFG = await _service.GetComponentOrFGByPnPlantAsync(pnPlant);
+            if (componentOrFG == "Unknown")
+            {
+                return NotFound("PnPlant not found or ComponentOrFG is unknown.");
+            }
+            return Ok(new { PnPlant = pnPlant, ComponentOrFG = componentOrFG });
+        }
+
         [HttpPost]
         public async Task<IActionResult> CreateMapping([FromBody] CreatePnPlantComponentMappingDTO mappingDTO)
         {
@@ -53,7 +64,6 @@ namespace back.Controllers
             return CreatedAtAction(nameof(GetMappingByPnPlant), new { pnPlant = newMapping.PnPlant }, newMapping);
         }
 
-        // Create multiple mappings (bulk)
         [HttpPost("bulk")]
         public async Task<IActionResult> CreateMappings([FromBody] List<CreatePnPlantComponentMappingDTO> mappingDTOs)
         {
@@ -66,7 +76,6 @@ namespace back.Controllers
             return Ok(createdMappings);
         }
 
-        // Update mapping by ID
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateMapping(Guid id, [FromBody] CreatePnPlantComponentMappingDTO mappingDto)
         {
@@ -78,7 +87,6 @@ namespace back.Controllers
             return Ok(updatedMapping);
         }
 
-        // Delete mapping by ID
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteMapping(Guid id)
         {
@@ -86,6 +94,17 @@ namespace back.Controllers
             if (!result)
             {
                 return NotFound("Mapping not found.");
+            }
+            return NoContent();
+        }
+
+        [HttpDelete("all")]
+        public async Task<IActionResult> DeleteAllMappings()
+        {
+            var result = await _service.DeleteAllMappingsAsync();
+            if (!result)
+            {
+                return NotFound("No mappings to delete.");
             }
             return NoContent();
         }

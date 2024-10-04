@@ -591,7 +591,6 @@ const handleSavePlantComponentClick = async (row) => {
   rows={plantComponentRows}
   //getRowId={(row) => row.id} // Specify the custom id extraction
   columns={[
-      { field: "id", headerName: "ID", width: 90 },
       { field: "pnPlant", headerName: "Plant", flex: 1 },
       { field: "componentOrFG", headerName: "Component", flex: 1 },
       {

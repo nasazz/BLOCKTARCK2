@@ -12,6 +12,7 @@ import { CssBaseline, ThemeProvider } from "@mui/material";
 import { ColorModeContext, useMode } from "./theme";
 import './styles/index1.css';
 import Configuration from "./scenes/Configuration/Configuration";
+import {ChartDataProvider}  from "./ChartDataContext";
 
 function App() {
   const [theme, colorMode] = useMode();
@@ -44,6 +45,7 @@ function App() {
           {!isLoginPage && <Sidebar isSidebar={isSidebar} />} {/* Sidebar hidden on login */}
           <main className={`content ${isLoginPage ? 'login-page' : ''}`}>
             {!isLoginPage && <Topbar setIsSidebar={setIsSidebar} />} {/* Topbar hidden on login */}
+            <ChartDataProvider>
             <Routes>
               <Route path="/" element={<LoginForm />} />
               <Route path="/login" element={<LoginForm />} />
@@ -54,6 +56,8 @@ function App() {
               <Route path="/form/:userId?" element={<Form />} /> 
               <Route path="/configuration" element={<Configuration />} />          
             </Routes>
+            </ChartDataProvider>
+
           </main>
         </div>
       </ThemeProvider>
