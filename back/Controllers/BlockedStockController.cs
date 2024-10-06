@@ -6,6 +6,8 @@ using System.Threading.Tasks;
 using back.Models;
 using back.Services;
 using OfficeOpenXml;
+using System.Globalization;
+
 
 namespace back.Controllers
 {
@@ -59,17 +61,30 @@ namespace back.Controllers
                     {
                         var worksheet1 = package.Workbook.Worksheets[0]; // Only the first sheet for Blocked Stock data
 
+                        // Get the filename without extension
+                        var fileNameWithoutExtension = Path.GetFileNameWithoutExtension(file.FileName);
+
+                        // Ensure the filename has at least 8 characters
+                        if (fileNameWithoutExtension.Length < 8 ||
+                            !DateTime.TryParseExact(fileNameWithoutExtension.Substring(fileNameWithoutExtension.Length - 8),
+                                                     "d.M.yy", null, System.Globalization.DateTimeStyles.None,
+                                                     out DateTime blockedStockDate))
+                        {
+                            return BadRequest("Invalid title format or date in the filename.");
+                        }
+
+
                         var rowCount = worksheet1.Dimension?.Rows ?? 0;
                         if (rowCount <= 2)
                         {
                             return BadRequest("No data found in the Excel file.");
                         }
-
-                        var blockedStockDateText = worksheet1.Cells[2, 36].Text.Trim();
-                        if (!DateTime.TryParse(blockedStockDateText, out DateTime blockedStockDate))
-                        {
-                            return BadRequest("Invalid date format in the 36th cell of the second row.");
-                        }
+                        /* 
+                                                var blockedStockDateText = worksheet1.Cells[2, 36].Text.Trim();
+                                                if (!DateTime.TryParse(blockedStockDateText, out DateTime blockedStockDate))
+                                                {
+                                                    return BadRequest("Invalid date format in the 36th cell of the second row.");
+                                                } */
 
                         var blockedStockList = new List<BlockedStock>();
 
@@ -148,7 +163,7 @@ namespace back.Controllers
                                 {
                                     lastChange = DateTime.MinValue;
                                 }
-                                
+
                                 if (!DateTime.TryParse(endOfLifeDateText, out DateTime endOfLifeDate))
                                 {
                                     endOfLifeDate = DateTime.MinValue;
@@ -157,6 +172,7 @@ namespace back.Controllers
                                 var pnPlant = $"{material}{plant}";
                                 var team = await _mrpControllerTeamMappingService.GetTeamByMRPControllerAsync(mrpController); // Get team from service
                                 var componentOrFG = await _pnPlantComponentMappingService.GetComponentOrFGByPnPlantAsync(pnPlant); // Get ComponentOrFG
+                                
                                 var customID = $"{plant}{pnPlant}";
 
                                 var blockedSinceDays = (blockedStockDate - createdOn).Days;

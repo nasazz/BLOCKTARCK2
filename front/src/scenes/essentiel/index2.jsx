@@ -11,6 +11,9 @@ import { importBlockedStockData, getBlockedStockData, getMissingFieldsCount, del
 import { groupBy, sumBy } from 'lodash';
 import MockData from "../../data/mockData.js";
 import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
+import {useChartData}  from '../../ChartDataContext';
+import { DataGrid } from '@mui/x-data-grid';
+
 
 // Function to format numbers with period as thousands separator
 const formatNumber = (number) => {
@@ -22,7 +25,7 @@ const HOME = () => {
   const colors = tokens(theme.palette.mode);
   const fileInputRef = useRef(null);
   const [blockedStockData, setBlockedStockData] = useState([]);
-  const [chartData, setChartData] = useState([]);
+  const { chartData, setChartData } = useChartData(); // Use the context
   const [totalValue, setTotalValue] = useState(0);
   const [missingFieldsCount, setMissingFieldsCount] = useState(0);
   const [userRole, setUserRole] = useState('');
@@ -34,6 +37,9 @@ const HOME = () => {
     };
 
     fetchUserRole();
+    
+    fetchBlockedStockData();
+  }, []);
 
     const fetchBlockedStockData = async () => {
       try {
@@ -42,87 +48,89 @@ const HOME = () => {
 
         const total = sumBy(data, 'value');
         setTotalValue(total);
-
-        const aggregatedData = aggregateDataByWeek(data);
-        const sortedData = aggregatedData.sort((a, b) => a.week - b.week);
-        const transformedData = [
-          {
-            id: "blocked_stock",
-            data: sortedData.map(item => ({
-              x: item.week,
-              y: item.value,
-            })),
-          },
-        ];
-        setChartData(transformedData);
-
-        const missingCount = await getMissingFieldsCount();
-        setMissingFieldsCount(missingCount);
+      setMissingFieldsCount(await getMissingFieldsCount());
       } catch (error) {
         console.error("Error fetching blocked stock data:", error);
       }
     };
 
-    fetchBlockedStockData();
-  }, []);
-
-  const aggregateDataByWeek = (data) => {
-    // Filtrer uniquement les données de l'année 2024
+    const handleFileUpload = async (event) => {
+      const file = event.target.files[0];
+      if (file) {
+        try {
+          // Extract the date from the file name
+          const fileName = file.name;
+          const dateMatch = fileName.match(/(\d{2})\.(\d{2})\.(\d{2})/); // Matches DD.MM.YY format
     
-    const filteredData = data.filter(item => {
-      const date = new Date(item.createdOn);
-      return date.getFullYear() === 2024;
-    });
-  
-    // Grouper par numéro de semaine
-    const groupedData = groupBy(filteredData, (item) => {
-      const date = new Date(item.createdOn);
-      const week = Math.ceil(((date - new Date(date.getFullYear(), 0, 1)) / 86400000 + 1) / 7);
-      return week; // Retourne uniquement le numéro de la semaine
-    });
-  
-    // Retourner les données agrégées
-    return Object.keys(groupedData).map(key => {
-      const values = groupedData[key];
-      return {
-        week: parseInt(key, 10), // Convertit la clé (numéro de la semaine) en entier
-        value: sumBy(values, 'value'), // Calcule la somme des valeurs pour cette semaine
-      };
-    });
-  };
-
-  const handleFileUpload = async (event) => {
-    const file = event.target.files[0];
-    if (file) {
-      try {
-        await importBlockedStockData(file);
-        const data = await getBlockedStockData();
-        setBlockedStockData(data);
-
-        const total = sumBy(data, 'value');
-        setTotalValue(total);
-
-        const aggregatedData = aggregateDataByWeek(data);
-        const sortedData = aggregatedData.sort((a, b) => a.week - b.week);
-        const transformedData = [
-          {
-            id: "blocked_stock",
-            data: sortedData.map(item => ({
-              x: item.week,
-              y: item.value,
-            })),
-          },
-        ];
-        setChartData(transformedData);
-
-        const missingCount = await getMissingFieldsCount();
-        setMissingFieldsCount(missingCount);
-      } catch (error) {
-        console.error("Error importing file:", error);
+          if (dateMatch) {
+            const day = parseInt(dateMatch[1]);
+            const month = parseInt(dateMatch[2]) - 1; // Months are 0-indexed in JavaScript
+            const year = 2000 + parseInt(dateMatch[3]); // Assuming YY is in 2000s
+            
+            const date = new Date(year, month, day);
+    
+            // Get the week number from the date
+            const weekNumber = getWeekNumber(date); // You'll implement this function
+            
+            await importBlockedStockData(file);
+            fetchBlockedStockData();
+    
+            // Reset chart data to the new total value
+            const total = sumBy(await getBlockedStockData(), 'value');
+            const newDataPoint = {
+              id: "blocked_stock",
+              data: [{ x: weekNumber, y: total }],
+            };
+            
+           setChartData(prevChartData => {
+          const existingData = prevChartData.find(d => d.id === newDataPoint.id);
+          if (existingData) {
+            // Append the new data point to the existing data
+            return prevChartData.map(d => 
+              d.id === newDataPoint.id 
+                ? { ...d, data: [...d.data, ...newDataPoint.data] }
+                : d
+            );
+          } else {
+            // If it doesn't exist, add it to the chart data
+            return [...prevChartData, newDataPoint];
+          }
+        });
+      } else {
+        console.error("Date not found in the file name.");
       }
+    } catch (error) {
+      console.error("Error importing file:", error);
     }
-  };
+  }
+};
 
+
+const columns = [
+  { field: 'category', headerName: 'Category', width: 200 },
+  // { field: 'subCategory', headerName: 'Sub Category', width: 200 },
+  { field: 'lessThan1M', headerName: '≤ 1M', width: 150 },
+  { field: 'between1MAnd2M', headerName: '1M < Blk < 2M', width: 200 },
+  { field: 'greaterThan2M', headerName: '≥ 2M', width: 150 },
+  { field: 'grandTotal', headerName: 'Grand Total', width: 150 },
+];
+
+const rows = [
+  { id: 1, category: 'Finish Goods',  lessThan1M: '', between1M2M: '', moreThan2M: '', grandTotal: '' },
+  { id: 2, category: 'Produced Component', lessThan1M: '', between1M2M: '', moreThan2M: '', grandTotal: '' },
+  { id: 3, category: 'Raw Material',  lessThan1M: '', between1M2M: '', moreThan2M: '', grandTotal: '' },
+  { id: 4, category: 'Work In Progress',  lessThan1M: '', between1M2M: '', moreThan2M: '', grandTotal: '' },
+  { id: 5, category: 'Grand Total', lessThan1M: '', between1M2M: '', moreThan2M: '', grandTotal: '' },
+];
+
+
+
+    // Function to calculate week number from a date
+    const getWeekNumber = (date) => {
+      const startDate = new Date(date.getFullYear(), 0, 1);
+      const days = Math.floor((date - startDate) / (24 * 60 * 60 * 1000));
+      return Math.ceil((days + startDate.getDay() + 1) / 7);
+    };
   const handleImportClick = () => {
     fileInputRef.current.click();
   };
@@ -314,11 +322,56 @@ const HOME = () => {
               </IconButton>
             </Box>
           </Box>
-          <Box height="250px" m="-20px 0 0 0">
-            <LineChart data={chartData} isDashboard={true} />
+          <Box
+            height="250px"
+            m="-20px 0 0 0"
+            display="flex" // Enables flexbox
+            justifyContent="center" // Centers horizontally
+            alignItems="center" // Centers vertically
+          >
+            {chartData.length > 0 ? (
+              <LineChart data={chartData} isDashboard={true} />
+            ) : (
+              <Typography sx={{ marginTop: '20px' }}>No data available</Typography> // Fallback UI with margin
+            )}
           </Box>
         </Box>
       </Box>
+          
+
+    <Box gridColumn="span 12" gridRow="span 2" backgroundColor={colors.primary[100]}  sx={{ marginTop: '30px' }}>
+      <DataGrid 
+        rows={rows} 
+        columns={columns} 
+        pageSize={5} 
+        rowsPerPageOptions={[5, 10, 20]} 
+        pagination 
+        autoHeight
+        sx={{
+          width: "100%",
+          borderRadius: 2,
+          overflow: 'hidden',
+          boxShadow: `0 4px 6px rgba(0, 0, 0, 0.1)`,
+          "& .MuiDataGrid-root": {
+            border: "none",
+          },
+          "& .MuiDataGrid-cell": {
+            borderBottom: `1px solid ${colors.grey[300]}`,
+            fontSize: '16px',
+          },
+          "& .MuiDataGrid-columnHeaders": {
+            backgroundColor: colors.orangeAccent[500],
+            borderBottom: `1px solid ${colors.grey[300]}`,
+            fontSize: '16px',
+          },
+          "& .MuiDataGrid-virtualScroller": {
+            backgroundColor: colors.primary[400],
+          },
+        }}
+      />
+    </Box>
+
+
     </Box>
   );
 };
