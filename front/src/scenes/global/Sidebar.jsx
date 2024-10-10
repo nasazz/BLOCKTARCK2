@@ -110,7 +110,7 @@ const Sidebar = () => {
             alignItems="center"
             margin="15px 0"
           >
-            <img
+         {/*    <img
               src={logo}
               alt="Logo"
               style={{
@@ -118,7 +118,7 @@ const Sidebar = () => {
                 height: "120px",
                 borderRadius: "10px", // Add rounded corners
               }}
-            />
+            /> */}
             <IconButton onClick={() => setIsCollapsed(!isCollapsed)}>
               <MenuOutlinedIcon />
             </IconButton>
@@ -152,6 +152,8 @@ const Sidebar = () => {
             />
               
               {/* App Management Label */}
+              {isAdmin && (
+
             <Box
               style={{
                 margin: "20px 0",
@@ -169,6 +171,7 @@ const Sidebar = () => {
                 </Typography>
               )}
             </Box>
+            )}
 
             {/* Conditionally render "Manage Team" if user is Admin */}
             {isAdmin && (

@@ -38,8 +38,13 @@ const HOME = () => {
 
     fetchUserRole();
     
+  // Load chart data from localStorage if available
+  const storedChartData = localStorage.getItem('chartData');
+  if (storedChartData) {
+    setChartData(JSON.parse(storedChartData));
     fetchBlockedStockData();
-  }, []);
+  } 
+}, []);
 
     const fetchBlockedStockData = async () => {
       try {
@@ -82,20 +87,21 @@ const HOME = () => {
               data: [{ x: weekNumber, y: total }],
             };
             
-           setChartData(prevChartData => {
-          const existingData = prevChartData.find(d => d.id === newDataPoint.id);
-          if (existingData) {
-            // Append the new data point to the existing data
-            return prevChartData.map(d => 
-              d.id === newDataPoint.id 
-                ? { ...d, data: [...d.data, ...newDataPoint.data] }
-                : d
-            );
-          } else {
-            // If it doesn't exist, add it to the chart data
-            return [...prevChartData, newDataPoint];
-          }
-        });
+            setChartData((prevChartData) => {
+              const existingData = prevChartData.find(d => d.id === newDataPoint.id);
+              const updatedChartData = existingData
+                ? prevChartData.map(d => 
+                    d.id === newDataPoint.id 
+                      ? { ...d, data: [...d.data, ...newDataPoint.data] }
+                      : d
+                  )
+                : [...prevChartData, newDataPoint];
+            
+              // Save updated chart data to localStorage
+              localStorage.setItem('chartData', JSON.stringify(updatedChartData));
+            
+              return updatedChartData;
+            });
       } else {
         console.error("Date not found in the file name.");
       }
@@ -104,26 +110,6 @@ const HOME = () => {
     }
   }
 };
-
-
-const columns = [
-  { field: 'category', headerName: 'Category', width: 200 },
-  // { field: 'subCategory', headerName: 'Sub Category', width: 200 },
-  { field: 'lessThan1M', headerName: '≤ 1M', width: 150 },
-  { field: 'between1MAnd2M', headerName: '1M < Blk < 2M', width: 200 },
-  { field: 'greaterThan2M', headerName: '≥ 2M', width: 150 },
-  { field: 'grandTotal', headerName: 'Grand Total', width: 150 },
-];
-
-const rows = [
-  { id: 1, category: 'Finish Goods',  lessThan1M: '', between1M2M: '', moreThan2M: '', grandTotal: '' },
-  { id: 2, category: 'Produced Component', lessThan1M: '', between1M2M: '', moreThan2M: '', grandTotal: '' },
-  { id: 3, category: 'Raw Material',  lessThan1M: '', between1M2M: '', moreThan2M: '', grandTotal: '' },
-  { id: 4, category: 'Work In Progress',  lessThan1M: '', between1M2M: '', moreThan2M: '', grandTotal: '' },
-  { id: 5, category: 'Grand Total', lessThan1M: '', between1M2M: '', moreThan2M: '', grandTotal: '' },
-];
-
-
 
     // Function to calculate week number from a date
     const getWeekNumber = (date) => {
@@ -142,6 +128,8 @@ const rows = [
       setChartData([]);
       setTotalValue(0);
       setMissingFieldsCount(0);
+      localStorage.removeItem('chartData');
+
       console.log("All reports deleted successfully");
     } catch (error) {
       console.error("Error deleting reports:", error);
@@ -196,10 +184,10 @@ const rows = [
         </Box>
       </Box>
 
-      {/* GRID & CHARTS */}
-      <Box
+  {/* GRID & CHARTS */}
+  <Box
         display="grid"
-        gridTemplateColumns="repeat(12, 1fr)"
+        gridTemplateColumns="repeat(15, 4fr)"
         gridAutoRows="140px"
         gap="20px"
       >
@@ -215,7 +203,7 @@ const rows = [
             title={
               <span style={{ textAlign: 'center', display: 'block' }}>
                 <span style={{ color: colors.orangeAccent[600] }}>
-                  {formatNumber(totalValue)}
+                {formatNumber(totalValue)}
                 </span>
               </span>
             }
@@ -239,7 +227,7 @@ const rows = [
             title={
               <span style={{ textAlign: 'center', display: 'block' }}>
                 <span style={{ color: colors.orangeAccent[600] }}>
-                  {formatNumber(sumBy(blockedStockData.filter(item => item.team === 'MCA'), 'value'))}
+                {formatNumber(sumBy(blockedStockData.filter(item => item.team === 'MCA'), 'value'))}
                 </span>
               </span>
             }
@@ -251,7 +239,7 @@ const rows = [
             }
           />
         </Box>
-
+        
         <Box
           gridColumn="span 3"
           backgroundColor={colors.primary[100]}
@@ -263,7 +251,7 @@ const rows = [
             title={
               <span style={{ textAlign: 'center', display: 'block' }}>
                 <span style={{ color: colors.orangeAccent[600] }}>
-                  {formatNumber(sumBy(blockedStockData.filter(item => item.team === 'CAS'), 'value'))}
+                {formatNumber(sumBy(blockedStockData.filter(item => item.team === 'CAS'), 'value'))}
                 </span>
               </span>
             }
@@ -276,7 +264,16 @@ const rows = [
           />
         </Box>
 
-        {!isSupplyChain && ( // Hide the notification box if user is Supply Chain
+
+        <Box gridColumn="span 3" backgroundColor={colors.primary[100]} display="flex" alignItems="center" justifyContent="center">
+          <StatBox
+            title={<span style={{ color: colors.orangeAccent[600] }}>{sumBy(blockedStockData.filter(item => item.team === 'Stamping'), 'value').toFixed(2)}</span>}
+            subtitle="Total Stamping Team Blocked Stock"
+            icon={<AttachMoneyIcon sx={{ color: colors.orangeAccent[600], fontSize: "30px" }} />}
+          />
+        </Box>
+
+        {!isSupplyChain && (
           <Box
             gridColumn="span 3"
             backgroundColor={colors.primary[100]}
@@ -294,7 +291,7 @@ const rows = [
 
         {/* ROW 2 */}
         <Box
-          gridColumn="span 12"
+          gridColumn="span 15"
           gridRow="span 2"
           backgroundColor={colors.primary[100]}
         >
@@ -338,7 +335,7 @@ const rows = [
         </Box>
       </Box>
           
-
+{/* 
     <Box gridColumn="span 12" gridRow="span 2" backgroundColor={colors.primary[100]}  sx={{ marginTop: '30px' }}>
       <DataGrid 
         rows={rows} 
@@ -369,7 +366,7 @@ const rows = [
           },
         }}
       />
-    </Box>
+    </Box> */}
 
 
     </Box>

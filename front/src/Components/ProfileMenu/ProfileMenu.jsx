@@ -51,6 +51,7 @@ const ProfileMenu = () => {
   const handleLogout = () => {
     // Clear token from local storage
     localStorage.removeItem('token');
+    //localStorage.removeItem('chartData');
     // Redirect to the login page or any other desired page
     navigate('/login'); // Use navigate to redirect
     // Optionally refresh the app or clear user state

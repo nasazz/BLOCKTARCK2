@@ -439,7 +439,7 @@ const handleSavePlantComponentClick = async (row) => {
           departmentRows,
           setSelectedDepartmentRows,
           selectedDepartmentRows,
-          [{ field: "name", headerName: "Name", width: 398 }],
+          [{ field: "name", headerName: "Name", width: 390 }],
           addDepartment,
           deleteDepartment,
           updateDepartment,
@@ -482,7 +482,6 @@ const handleSavePlantComponentClick = async (row) => {
         <DataGrid
           rows={mappingRows}
           columns={[
-            { field: "id", headerName: "ID", width: 90 },
             { field: "mrpController", headerName: "MRP Controller", flex: 1 },
             { field: "team", headerName: "Team", flex: 1 },
             {
@@ -568,18 +567,18 @@ const handleSavePlantComponentClick = async (row) => {
       <Box mb={6} p={2} maxWidth="95%" mx="auto" borderRadius={2} bgcolor={colors.primary[400]} boxShadow={`0 2px 4px rgba(0, 0, 0, 0.05)`}>
 
             <Typography variant="h4" sx={{ mb: 2, fontWeight: "bold" }}>
-                PnPlant/Component
+                PnPlant/Component Type
             </Typography>
             <Box display="flex" alignItems="center" sx={{ mb: 2 }}>
                 <TextField
-                    label="Plant"
+                    label="Pn Plant"
                     variant="outlined"
                     value={newPlant}
                     onChange={(e) => setNewPlant(e.target.value)}
                     sx={{ mr: 2, flex: 1 }}
                 />
                 <TextField
-                    label="Component"
+                    label="Component Type"
                     variant="outlined"
                     value={newComponent}
                     onChange={(e) => setNewComponent(e.target.value)}
@@ -597,8 +596,8 @@ const handleSavePlantComponentClick = async (row) => {
   rows={plantComponentRows}
   //getRowId={(row) => row.id} // Specify the custom id extraction
   columns={[
-      { field: "pnPlant", headerName: "Plant", flex: 1 },
-      { field: "componentOrFG", headerName: "Component", flex: 1 },
+      { field: "pnPlant", headerName: "PN Plant", flex: 1 },
+      { field: "componentOrFG", headerName: "Component Type", flex: 1 },
       {
           field: "action",
           headerName: "",

@@ -12,11 +12,12 @@ import PieChart from "../../Components/PieChart";
 import { importBlockedStockData, getBlockedStockData, getMissingFieldsCount, deleteAllBlockedStockData } from '../../Services/BlockedStockService';
 import { groupBy, sumBy } from 'lodash';
 import {useChartData}  from '../../ChartDataContext';
-
+import { DataGrid } from '@mui/x-data-grid';
 
 const formatNumber = (number) => {
   return new Intl.NumberFormat('de-DE').format(number);
 };
+
 
 const Dashboard = () => {
   const theme = useTheme();
@@ -31,7 +32,14 @@ const Dashboard = () => {
   const [pieChartDataByComponent, setPieChartDataByComponent] = useState([]);
   const [pieChartDataByBlockingPeriod, setPieChartDataByBlockingPeriod] = useState([]);
 
+  const [expandedRows, setExpandedRows] = useState({});
 
+  const toggleRowExpansion = (componentLabel) => {
+    setExpandedRows((prev) => ({
+      ...prev,
+      [componentLabel]: !prev[componentLabel],
+    }));
+  };
 
 
   useEffect(() => {
@@ -66,8 +74,6 @@ const Dashboard = () => {
       // Update pie chart data based on BlockingPeriod
       const pieDataByBlockingPeriod = aggregatePieDataByBlockingPeriod(data);
       setPieChartDataByBlockingPeriod(pieDataByBlockingPeriod);
-
-
       
     } catch (error) {
       console.error("Error fetching blocked stock data:", error);
@@ -100,6 +106,27 @@ const Dashboard = () => {
       value: sumBy(grouped[key], 'value'),
     }));
   };
+ // Prepare Data for DataGrid
+ const rows = [
+  ...pieChartDataByComponent.map((item, index) => ({
+    id: `component-${index}`,
+    category: item.label,
+    value: formatNumber(item.value),
+    type: "Component/FG"
+  })),
+  ...pieChartDataByBlockingPeriod.map((item, index) => ({
+    id: `blocking-${index}`,
+    category: item.label,
+    value: formatNumber(item.value),
+    type: "Blocking Period"
+  }))
+];
+
+const columns = [
+  { field: 'category', headerName: 'Category', flex: 1 },
+  { field: 'value', headerName: 'Value', flex: 1 },
+  { field: 'type', headerName: 'Type', flex: 1 }
+];
 
   const handleFileUpload = async (event) => {
     const file = event.target.files[0];
@@ -141,6 +168,8 @@ const Dashboard = () => {
       setTotalValue(0);
       setMissingFieldsCount(0);
       setPieChartData([]);
+      
+      
       console.log("All reports deleted successfully");
     } catch (error) {
       console.error("Error deleting reports:", error);
@@ -154,7 +183,7 @@ const Dashboard = () => {
     <Box m="20px">
       <Box display="flex" justifyContent="space-between" alignItems="center">
         <Header title="DASHBOARD" subtitle="Welcome to your dashboard" />
-        <Box display="flex" gap="10px">
+       {/*  <Box display="flex" gap="10px">
           {!isQuality && (
             <>
               <Button
@@ -192,7 +221,7 @@ const Dashboard = () => {
               </Button>
             </>
           )}
-        </Box>
+        </Box> */}
       </Box>
 
       {/* GRID & CHARTS */}
@@ -321,8 +350,12 @@ const Dashboard = () => {
             )}
           </Box>
         </Box>
-  {/* /*       {/* ROW 3 */}
-     <Box gridColumn="span 15" gridRow="span 2" backgroundColor={colors.primary[100]}>
+
+
+
+
+  {/* /* {/* ROW 3 */}
+     <Box gridColumn="span 8" gridRow="span 2" backgroundColor={colors.primary[100]}>
           <Box mt="25px" p="0 30px" display="flex" justifyContent="space-between" alignItems="center">
           <Typography variant="h5" fontWeight="600" color={colors.orangeAccent[400]}>
             Blocked Stock Value per product type
@@ -332,7 +365,7 @@ const Dashboard = () => {
             <PieChart data={pieChartData} />
           </Box>
         </Box> 
-        <Box gridColumn="span 15" gridRow="span 2" backgroundColor={colors.primary[100]}>
+        <Box gridColumn="span 7" gridRow="span 2" backgroundColor={colors.primary[100]}>
           <Box mt="25px" p="0 30px" display="flex" justifyContent="space-between" alignItems="center">
           <Typography variant="h5" fontWeight="600" color={colors.orangeAccent[400]}>
             Blocked Stock Value per product type
@@ -353,7 +386,113 @@ const Dashboard = () => {
           </Box>
         </Box> 
       </Box>
+      <Box m="20px">
+      <Box gridColumn="span 15" gridRow="span 4" backgroundColor={colors.primary[100]}>
+      <Box mt="25px" p="0 30px" display="flex" justifyContent="space-between" alignItems="center">
+        <Typography variant="h5" fontWeight="600" color={colors.orangeAccent[400]}>
+          Blocked Stock Matrix by Component and Blocking Period
+        </Typography>
+      </Box>
+
+      <Box mt="20px" p="20px">
+        <table style={{ width: '100%', textAlign: 'center', borderCollapse: 'collapse' }}>
+          <thead>
+            <tr>
+              <th style={{ border: `1px solid ${colors.grey[300]}`, padding: '10px' }}>Component/FG</th>
+              {pieChartDataByBlockingPeriod.map((item) => (
+                <th key={item.id} style={{ border: `1px solid ${colors.grey[300]}`, padding: '10px' }}>{item.label}</th>
+              ))}
+              <th style={{ border: `1px solid ${colors.grey[300]}`, padding: '10px' }}>Grand Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            {pieChartDataByComponent.map((component) => {
+              const rowTotal = pieChartDataByBlockingPeriod.reduce((sum, period) => {
+                const filteredData = blockedStockData.filter(
+                  (item) => item.componentOrFG === component.label && item.blockingPeriodCluster === period.label
+                );
+                return sum + sumBy(filteredData, 'value');
+              }, 0);
+
+              return (
+                <React.Fragment key={component.id}>
+                  <tr>
+                    <td style={{ border: `1px solid ${colors.grey[300]}`, padding: '10px', textAlign: 'left' }}>
+                      <button onClick={() => toggleRowExpansion(component.label)}>
+                        {expandedRows[component.label] ? '-' : '+'}
+                      </button>
+                      {component.label}
+                    </td>
+                    {pieChartDataByBlockingPeriod.map((period) => {
+                      const filteredData = blockedStockData.filter(
+                        (item) => item.componentOrFG === component.label && item.blockingPeriodCluster === period.label
+                      );
+                      const cellValue = sumBy(filteredData, 'value');
+
+                      return (
+                        <td key={period.id} style={{ border: `1px solid ${colors.grey[300]}`, padding: '10px' }}>
+                          {cellValue.toFixed(2)}
+                        </td>
+                      );
+                    })}
+                    <td style={{ border: `1px solid ${colors.grey[300]}`, padding: '10px' }}>
+                      {rowTotal.toFixed(2)}
+                    </td>
+                  </tr>
+
+                  {/* Team Data Row */}
+                  {expandedRows[component.label] &&
+                    Array.from(new Set(blockedStockData
+                      .filter((item) => item.componentOrFG === component.label)
+                      .map((item) => item.team)
+                    )).map((team, index) => {
+                      const teamTotal = pieChartDataByBlockingPeriod.reduce((sum, period) => {
+                        const filteredTeamData = blockedStockData.filter(
+                          (item) =>
+                            item.componentOrFG === component.label &&
+                            item.team === team &&
+                            item.blockingPeriodCluster === period.label
+                        );
+                        return sum + sumBy(filteredTeamData, 'value');
+                      }, 0);
+
+                      return (
+                        <tr key={index}>
+                          <td style={{ border: `1px solid ${colors.grey[300]}`, padding: '10px', textAlign: 'left', paddingLeft: '30px' }}>
+                            {team}
+                          </td>
+                          {pieChartDataByBlockingPeriod.map((period) => {
+                            const filteredTeamData = blockedStockData.filter(
+                              (item) =>
+                                item.componentOrFG === component.label &&
+                                item.team === team &&
+                                item.blockingPeriodCluster === period.label
+                            );
+                            const teamCellValue = sumBy(filteredTeamData, 'value');
+
+                            return (
+                              <td key={period.id} style={{ border: `1px solid ${colors.grey[300]}`, padding: '10px' }}>
+                                {teamCellValue.toFixed(2)}
+                              </td>
+                            );
+                          })}
+                          <td style={{ border: `1px solid ${colors.grey[300]}`, padding: '10px' }}>
+                            {teamTotal.toFixed(2)}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                </React.Fragment>
+              );
+            })}
+          </tbody>
+        </table>
+      </Box>
     </Box>
+    
+    </Box>
+    </Box>
+    
   );
 };
 
