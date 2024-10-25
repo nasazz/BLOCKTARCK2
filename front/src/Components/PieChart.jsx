@@ -6,7 +6,7 @@ import { useTheme } from "@mui/material";
 const formatNumber = (value) => {
   return new Intl.NumberFormat('en-US', {
     style: 'decimal', // Use decimal format for number
-  }).format(value) + ' $'; // Append dollar sign
+  }).format(value) + ' €'; // Append dollar sign
 };
 
 const PieChart = ({ data }) => {

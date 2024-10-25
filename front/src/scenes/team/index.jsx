@@ -60,7 +60,6 @@ const Team = () => {
   };
 
   const columns = [
-    { field: 'id', headerName: 'ID' },
     {
       field: 'fullName',
       headerName: 'Full Name',

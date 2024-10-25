@@ -40,8 +40,11 @@ namespace back.Controllers
 
             var roles = await _userManager.GetRolesAsync(user);                                                               // Get user roles
             var token = _tokenService.GenerateToken(user, roles);                                                             // Generate token with roles if needed
+            var team = user.Team;
+            var plant = user.Plant;
 
-            return Ok(new { Token = token, Role = roles.FirstOrDefault() });                            // Return the token and the first role (assuming single role)
+            return Ok(new { Token = token, Role = roles.FirstOrDefault(), Team = team, Plant = plant });
+            // Return the token and the first role (assuming single role)
         }
 
         [HttpPost("register")]
@@ -55,7 +58,7 @@ namespace back.Controllers
             var role = await _roleManager.FindByIdAsync(registerDto.Role); // Assuming role is the ID
 
             if (plant == null || department == null || team == null || role == null)
-            return BadRequest("Invalid references for Plant, Department, Team, or Role.");
+                return BadRequest("Invalid references for Plant, Department, Team, or Role.");
 
             var user = new User
             {
@@ -68,21 +71,21 @@ namespace back.Controllers
                 Role = role.Name // Store the actual name
             };
 
-         var result = await _userManager.CreateAsync(user, registerDto.Password);
-        if (!result.Succeeded)
-          return BadRequest(result.Errors);
+            var result = await _userManager.CreateAsync(user, registerDto.Password);
+            if (!result.Succeeded)
+                return BadRequest(result.Errors);
 
-        if (!await _roleManager.RoleExistsAsync(role.Name))
-            await _roleManager.CreateAsync(new IdentityRole<Guid>(role.Name));
+            if (!await _roleManager.RoleExistsAsync(role.Name))
+                await _roleManager.CreateAsync(new IdentityRole<Guid>(role.Name));
 
-        await _userManager.AddToRoleAsync(user, role.Name);
+            await _userManager.AddToRoleAsync(user, role.Name);
 
-        var roles = await _userManager.GetRolesAsync(user);
-        var token = _tokenService.GenerateToken(user, roles);
+            var roles = await _userManager.GetRolesAsync(user);
+            var token = _tokenService.GenerateToken(user, roles);
 
-        return Ok(new { User = user, Token = token });
-        } 
- 
+            return Ok(new { User = user, Token = token });
+        }
+
         [HttpGet]
         //[Authorize(Roles = "admin")]
         public async Task<IActionResult> GetUsers()
@@ -108,46 +111,46 @@ namespace back.Controllers
         {
             var user = await _context.Users.FindAsync(id);
             if (user == null)
-            return NotFound();
+                return NotFound();
 
-         // Fetch the actual names based on the provided IDs
-         var plant = await _context.Plants.FindAsync(Guid.Parse(updateDto.Plant));
-        var department = await _context.Departments.FindAsync(Guid.Parse(updateDto.Department));
-        var team = await _context.Teams.FindAsync(Guid.Parse(updateDto.Team));
-        var role = await _roleManager.FindByIdAsync(updateDto.Role);
+            // Fetch the actual names based on the provided IDs
+            var plant = await _context.Plants.FindAsync(Guid.Parse(updateDto.Plant));
+            var department = await _context.Departments.FindAsync(Guid.Parse(updateDto.Department));
+            var team = await _context.Teams.FindAsync(Guid.Parse(updateDto.Team));
+            var role = await _roleManager.FindByIdAsync(updateDto.Role);
 
-        if (plant == null || department == null || team == null || role == null)
-            return BadRequest("Invalid references for Plant, Department, Team, or Role.");
+            if (plant == null || department == null || team == null || role == null)
+                return BadRequest("Invalid references for Plant, Department, Team, or Role.");
 
-        user.UserName = updateDto.Email;
-        user.Email = updateDto.Email;
-        user.FullName = updateDto.FullName;
-        user.Plant = plant.Name; // Store the actual name
-        user.Department = department.Name; // Store the actual name
-        user.Team = team.Name; // Store the actual name
-        user.Role = role.Name; // Store the actual name
+            user.UserName = updateDto.Email;
+            user.Email = updateDto.Email;
+            user.FullName = updateDto.FullName;
+            user.Plant = plant.Name; // Store the actual name
+            user.Department = department.Name; // Store the actual name
+            user.Team = team.Name; // Store the actual name
+            user.Role = role.Name; // Store the actual name
 
-        // Update the user's role in UserManager
-        var currentRoles = await _userManager.GetRolesAsync(user);
-        var removeRolesResult = await _userManager.RemoveFromRolesAsync(user, currentRoles);
-        if (!removeRolesResult.Succeeded)
-            return BadRequest(removeRolesResult.Errors);
+            // Update the user's role in UserManager
+            var currentRoles = await _userManager.GetRolesAsync(user);
+            var removeRolesResult = await _userManager.RemoveFromRolesAsync(user, currentRoles);
+            if (!removeRolesResult.Succeeded)
+                return BadRequest(removeRolesResult.Errors);
 
-        var addRoleResult = await _userManager.AddToRoleAsync(user, role.Name);
-        if (!addRoleResult.Succeeded)
-            return BadRequest(addRoleResult.Errors);
+            var addRoleResult = await _userManager.AddToRoleAsync(user, role.Name);
+            if (!addRoleResult.Succeeded)
+                return BadRequest(addRoleResult.Errors);
 
-        // Save changes
-        var result = await _userManager.UpdateAsync(user);
-        if (!result.Succeeded)
-            return BadRequest(result.Errors);
+            // Save changes
+            var result = await _userManager.UpdateAsync(user);
+            if (!result.Succeeded)
+                return BadRequest(result.Errors);
 
-        // Generate a new token with the updated role
-        var roles = await _userManager.GetRolesAsync(user);
-        var token = _tokenService.GenerateToken(user, roles);
+            // Generate a new token with the updated role
+            var roles = await _userManager.GetRolesAsync(user);
+            var token = _tokenService.GenerateToken(user, roles);
 
-        return Ok(new { User = user, Token = token });
-    }
+            return Ok(new { User = user, Token = token });
+        }
         [HttpDelete("{id}")]
         [Authorize(Roles = "admin")]
         public async Task<IActionResult> DeleteUser(Guid id)

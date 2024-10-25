@@ -19,21 +19,19 @@ function App() {
   const [isSidebar, setIsSidebar] = useState(true);
   const navigate = useNavigate();
   const location = useLocation();
+
+  
   useEffect(() => {
     // Check if user is authenticated
     const token = localStorage.getItem('token');
-    if (token) {
-      // Redirect to Home page if token exists and user is authenticated
-      if (location.pathname === '/login') {
-        navigate('/home');
-      }
-    } else {
-      // Redirect to login page if no token
-      if (location.pathname !== '/login' && location.pathname !== '/') {
-        navigate('/login');
-      }
+    if (!token && location.pathname !== '/login' && location.pathname !== '/') {
+      navigate('/login');
+    } else if (token && (location.pathname === '/login' || location.pathname === '/')) {
+      navigate('/home'); // Redirect authenticated users away from the login page
     }
   }, [navigate, location.pathname]);
+
+  
 
   const isLoginPage = location.pathname === '/login' || location.pathname === '/';
 

@@ -338,7 +338,7 @@ namespace back.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("BlockedStocks");
+                    b.ToTable("BlockedStocks", (string)null);
                 });
 
             modelBuilder.Entity("back.Models.Department", b =>
@@ -353,7 +353,7 @@ namespace back.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Departments");
+                    b.ToTable("Departments", (string)null);
                 });
 
             modelBuilder.Entity("back.Models.MRPControllerTeamMapping", b =>
@@ -372,7 +372,7 @@ namespace back.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("MRPControllerTeamMappings");
+                    b.ToTable("MRPControllerTeamMappings", (string)null);
                 });
 
             modelBuilder.Entity("back.Models.Plant", b =>
@@ -387,7 +387,7 @@ namespace back.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Plants");
+                    b.ToTable("Plants", (string)null);
                 });
 
             modelBuilder.Entity("back.Models.PnPlantComponentMapping", b =>
@@ -406,7 +406,7 @@ namespace back.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("PnPlantComponentMappings");
+                    b.ToTable("PnPlantComponentMappings", (string)null);
                 });
 
             modelBuilder.Entity("back.Models.Team", b =>
@@ -421,7 +421,7 @@ namespace back.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Teams");
+                    b.ToTable("Teams", (string)null);
                 });
 
             modelBuilder.Entity("back.Models.User", b =>

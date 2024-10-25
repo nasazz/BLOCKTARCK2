@@ -44,20 +44,49 @@ const Contacts = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
   const [blockedStockData, setBlockedStockData] = useState([]);
+  const [columnVisibilityModel, setColumnVisibilityModel] = useState(() => {
+    return JSON.parse(localStorage.getItem('columnVisibilityModel')) || {};
+  });
 
-  useEffect(() => {
-    const fetchBlockedStockData = async () => {
-      try {
-        const data = await getBlockedStockData();
-        const sortedData = data.sort((a, b) => new Date(b.createdOn) - new Date(a.createdOn));
-        setBlockedStockData(sortedData);
-      } catch (error) {
-        console.error('Error fetching blocked stock data:', error);
-      }
-    };
+ const [filterModel, setFilterModel] = useState(() => {
+  const savedFilterModel = localStorage.getItem('filterModel');
+  return savedFilterModel ? JSON.parse(savedFilterModel) : { items: [] };
+});
 
-    fetchBlockedStockData();
-  }, []);
+
+useEffect(() => {
+  const fetchBlockedStockData = async () => {
+    try {
+      const data = await getBlockedStockData();
+      // Get the user's team from local storage
+      const userTeam = localStorage.getItem('userTeam');
+      const userPlant = localStorage.getItem('userPlant');
+        let filteredData = data;
+
+        // If user is not admin, filter by team and plant
+       // if (userRole !== 'admin') {
+          filteredData = filteredData.filter(item => item.team === userTeam && item.plant === userPlant);
+        //}
+
+
+      // Sort the filtered data
+      const sortedData = filteredData.sort((a, b) => new Date(b.createdOn) - new Date(a.createdOn));
+      
+      // Set the sorted filtered data to state
+      setBlockedStockData(sortedData);
+    } catch (error) {
+      console.error('Error fetching blocked stock data:', error);
+    }
+  };
+
+  fetchBlockedStockData();
+
+  const savedVisibility = JSON.parse(localStorage.getItem('columnVisibilityModel'));
+  if (savedVisibility) {
+    setColumnVisibilityModel(savedVisibility);
+  }
+}, []);
+
 
   const handleFunctionBlockingChange = async (id, newValue) => {
     try {
@@ -107,6 +136,15 @@ const Contacts = () => {
     }
   };
 
+  const handleColumnVisibilityChange = (model) => {
+    setColumnVisibilityModel(model);
+    localStorage.setItem('columnVisibilityModel', JSON.stringify(model));
+  };
+
+  const handleFilterChange = (model) => {
+    setFilterModel(model);
+    localStorage.setItem('filterModel', JSON.stringify(model));
+  };
   
 
   const columns = [
@@ -223,7 +261,7 @@ const Contacts = () => {
         sx={{
           '& .MuiDataGrid-root': {
             border: 'none',
-            fontSize:'17px'   ,
+            fontSize: '17px',
           },
           '& .MuiDataGrid-cell': {
             borderBottom: 'none',
@@ -232,42 +270,38 @@ const Contacts = () => {
           '& .MuiDataGrid-columnHeaders': {
             backgroundColor: colors.orangeAccent[500],
             borderBottom: 'none',
-            // marginBottom: 0,
-          },
-          '& .MuiDataGrid-row': {
-            
-            // marginTop: '2px',
           },
           '& .MuiDataGrid-virtualScroller': {
             backgroundColor: colors.primary[400],
-            
           },
           '& .MuiDataGrid-footerContainer': {
             borderTop: 'none',
             backgroundColor: colors.orangeAccent[500],
-            
           },
           '& .MuiCheckbox-root': {
             color: `${colors.grey[200]} !important`,
-            
           },
           '& .MuiDataGrid-toolbarContainer .MuiButton-text': {
-            color: `${colors.grey[900]} !important`,
-            fontSize:'13px'   ,
+            color: `${colors.orangeAccent[900]} !important`,
+            fontSize: '13px',
           },
           '&::-webkit-scrollbar': {
-            height: '12px', // Increase scrollbar height
+            height: '12px',
           },
           '&::-webkit-scrollbar-thumb': {
             backgroundColor: colors.orangeAccent[500],
             borderRadius: '20px',
-            border: `3px solid ${colors.primary[400]}`, // Add padding around the thumb
+            border: `3px solid ${colors.primary[400]}`,
           },
         }}
       >
         <DataGrid
           rows={blockedStockData}
           columns={columns}
+          columnVisibilityModel={columnVisibilityModel} // Load visibility model
+          onColumnVisibilityModelChange={handleColumnVisibilityChange} // Save changes
+          filterModel={filterModel}
+          onFilterModelChange={handleFilterChange}
           components={{ Toolbar: GridToolbar }}
           getRowId={(row) => row.id}
           autoHeight={false}

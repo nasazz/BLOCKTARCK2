@@ -39,11 +39,24 @@ namespace back.Services
             await _context.SaveChangesAsync();
         }
 
-        public async Task ImportBlockedStockDataAsync(IEnumerable<BlockedStock> blockedStockData)
-        {
-            // Assuming you want to first clear the existing data and then import the new data
-            await AddBlockedStockDataAsync(blockedStockData);
-        }
+    public async Task ImportBlockedStockDataAsync(IEnumerable<BlockedStock> blockedStockData)
+{
+    // Get the existing CustomIDs from the database to prevent duplicates
+    var existingCustomIDs = await _context.BlockedStocks
+                                          .Select(b => b.CustomID)
+                                          .ToListAsync();
+
+    // Filter out the items from the input data that already exist in the database
+    var newBlockedStockData = blockedStockData
+                                .Where(b => !existingCustomIDs.Contains(b.CustomID))
+                                .ToList();
+
+    // Add only the new blocked stock data with unique CustomIDs
+    if (newBlockedStockData.Any())
+    {
+        await AddBlockedStockDataAsync(newBlockedStockData);
+    }
+}
         public async Task<BlockedStock> GetBlockedStockByCustomIDAsync(string customID)
         {
             return await _context.BlockedStocks.FirstOrDefaultAsync(b => b.CustomID == customID);

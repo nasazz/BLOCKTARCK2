@@ -167,8 +167,8 @@ namespace back.Controllers
         }
 
         [HttpPut("departments/{id}")]
-        [Authorize(Roles = "admin")]
-        public async Task<IActionResult> UpdateDepartment(Guid id, [FromBody] Department updateDepartmentDto)
+        //[Authorize(Roles = "admin")]
+        public async Task<IActionResult> UpdateDepartment(Guid id, [FromBody] UpdateDepartmentDto updateDepartmentDto)
         {
             var department = await _context.Departments.FindAsync(id);
             if (department == null)

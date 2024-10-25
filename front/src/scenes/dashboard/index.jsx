@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react'; 
-import { Box, Button, Typography, useTheme } from "@mui/material";
+import { Box, Button, Typography, useTheme, IconButton } from "@mui/material";
 import { tokens } from "../../theme";
 import DeleteOutline from "@mui/icons-material/DeleteOutline"; 
 import DownloadOutlinedIcon from "@mui/icons-material/DownloadOutlined";
@@ -9,15 +9,19 @@ import Header from "../../Components/Header.jsx";
 import LineChart from "../../Components/LineChart";
 import StatBox from "../../Components/StatBox";
 import PieChart from "../../Components/PieChart";
+import BarChart from "../../Components/BarChart";
+import EuroIcon from '@mui/icons-material/Euro';
 import { importBlockedStockData, getBlockedStockData, getMissingFieldsCount, deleteAllBlockedStockData } from '../../Services/BlockedStockService';
 import { groupBy, sumBy } from 'lodash';
 import {useChartData}  from '../../ChartDataContext';
-import { DataGrid } from '@mui/x-data-grid';
+
+
 
 const formatNumber = (number) => {
   return new Intl.NumberFormat('de-DE').format(number);
 };
-
+// Conversion rate from your existing currency to euros (example: 1 USD = 0.85 EUR)
+const conversionRateToEuro = 0.92;
 
 const Dashboard = () => {
   const theme = useTheme();
@@ -31,6 +35,9 @@ const Dashboard = () => {
   const [pieChartData, setPieChartData] = useState([]);
   const [pieChartDataByComponent, setPieChartDataByComponent] = useState([]);
   const [pieChartDataByBlockingPeriod, setPieChartDataByBlockingPeriod] = useState([]);
+ 
+
+
 
   const [expandedRows, setExpandedRows] = useState({});
 
@@ -57,24 +64,33 @@ const Dashboard = () => {
     try {
       const data = await getBlockedStockData();
       setBlockedStockData(data);
-  
+      // Get the user's team from local storage
+      const userTeam = localStorage.getItem('userTeam');
+      const userPlant = localStorage.getItem('userPlant');
+
+
+      // Filter data based on user team
+      const filteredData = data.filter(item => 
+        item.team === userTeam && item.plant === userPlant
+      );
       const total = sumBy(data, 'value');
-      setTotalValue(total);
+      const totalInEuro = total * conversionRateToEuro; // Convert to euros
+      setTotalValue(totalInEuro); // Update the state with the euro value
       const missingCount = await getMissingFieldsCount();
       setMissingFieldsCount(missingCount);
-  
+
       // Update pie chart data based on codeExpectedUsageDecision
-      const pieDataByCode = aggregatePieData(data);
+      const pieDataByCode = aggregatePieData(filteredData);
       setPieChartData(pieDataByCode);
-  
+
       // Update pie chart data based on Component/FG
-      const pieDataByComponent = aggregatePieDataByComponent(data);
+      const pieDataByComponent = aggregatePieDataByComponent(filteredData);
       setPieChartDataByComponent(pieDataByComponent);
 
       // Update pie chart data based on BlockingPeriod
-      const pieDataByBlockingPeriod = aggregatePieDataByBlockingPeriod(data);
+      const pieDataByBlockingPeriod = aggregatePieDataByBlockingPeriod(filteredData);
       setPieChartDataByBlockingPeriod(pieDataByBlockingPeriod);
-      
+
     } catch (error) {
       console.error("Error fetching blocked stock data:", error);
     }
@@ -150,7 +166,7 @@ const columns = [
           // Update pie chart data
           const pieDataByBlockingPeriod = aggregatePieDataByBlockingPeriod(data);
           setPieChartData(pieDataByBlockingPeriod);
-
+        
       } catch (error) {
         console.error("Error importing file:", error);
       }
@@ -168,7 +184,7 @@ const columns = [
       setTotalValue(0);
       setMissingFieldsCount(0);
       setPieChartData([]);
-      
+
       
       console.log("All reports deleted successfully");
     } catch (error) {
@@ -249,9 +265,9 @@ const columns = [
             }
             subtitle="Total Blocked Stock Value"
             icon={
-              <AttachMoneyIcon
-                sx={{ color: colors.orangeAccent[600], fontSize: "30px" }}
-              />
+              <EuroIcon
+              sx={{ color: colors.orangeAccent[600], fontSize: "25px" }}
+            />
             }
           />
         </Box>
@@ -273,9 +289,9 @@ const columns = [
             }
             subtitle="Total MCA Team Blocked Stock"
             icon={
-              <AttachMoneyIcon
-                sx={{ color: colors.orangeAccent[600], fontSize: "30px" }}
-              />
+              <EuroIcon
+              sx={{ color: colors.orangeAccent[600], fontSize: "25px" }}
+            />
             }
           />
         </Box>
@@ -297,8 +313,8 @@ const columns = [
             }
             subtitle="Total CAS Team Blocked Stock"
             icon={
-              <AttachMoneyIcon
-                sx={{ color: colors.orangeAccent[600], fontSize: "30px" }}
+              <EuroIcon
+                sx={{ color: colors.orangeAccent[600], fontSize: "25px" }}
               />
             }
           />
@@ -307,13 +323,20 @@ const columns = [
 
         <Box gridColumn="span 3" backgroundColor={colors.primary[100]} display="flex" alignItems="center" justifyContent="center">
           <StatBox
-            title={<span style={{ color: colors.orangeAccent[600] }}>{sumBy(blockedStockData.filter(item => item.team === 'CAS'), 'value').toFixed(2)}</span>}
-            subtitle="Total CAS Team Blocked Stock"
-            icon={<AttachMoneyIcon sx={{ color: colors.orangeAccent[600], fontSize: "30px" }} />}
+            title={
+              <span style={{ textAlign: 'center', display: 'block' }}>
+                <span style={{ color: colors.orangeAccent[600] }}>
+                {formatNumber(sumBy(blockedStockData.filter(item => item.team === 'CAS'), 'value'))}
+                </span>
+              </span>
+            } 
+            subtitle="Total Stamping Team Blocked Stock"
+            icon={<EuroIcon
+              sx={{ color: colors.orangeAccent[600], fontSize: "25px" }}
+            />}
           />
         </Box>
 
-        {!isSupplyChain && (
           <Box
             gridColumn="span 3"
             backgroundColor={colors.primary[100]}
@@ -327,13 +350,13 @@ const columns = [
               icon={<NotificationsOutlinedIcon sx={{ color: colors.orangeAccent[600], fontSize: "26px" }} />}
             />
           </Box>
-        )}
+  
 
         {/* ROW 2 */}
         <Box gridColumn="span 15" gridRow="span 2" backgroundColor={colors.primary[100]}>
           <Box mt="25px" p="0 30px" display="flex" justifyContent="space-between" alignItems="center">
             <Typography variant="h5" fontWeight="600" color={colors.orangeAccent[400]}>
-              Line chart per week of the year
+              Blocked Stock Value Evolution
             </Typography>
           </Box>
           <Box
@@ -351,21 +374,33 @@ const columns = [
           </Box>
         </Box>
 
-
-
-
   {/* /* {/* ROW 3 */}
-     <Box gridColumn="span 8" gridRow="span 2" backgroundColor={colors.primary[100]}>
+
+     <Box gridColumn="span 7" gridRow="span 2"  backgroundColor={colors.primary[100]}>
           <Box mt="25px" p="0 30px" display="flex" justifyContent="space-between" alignItems="center">
           <Typography variant="h5" fontWeight="600" color={colors.orangeAccent[400]}>
-            Blocked Stock Value per product type
+            Blocked Stock Value per Quality Decision
           </Typography>
           </Box>
           <Box height="250px" marginTop="40px">
             <PieChart data={pieChartData} />
           </Box>
         </Box> 
-        <Box gridColumn="span 7" gridRow="span 2" backgroundColor={colors.primary[100]}>
+
+        <Box gridColumn="span 8" gridRow="span 2" backgroundColor={colors.primary[100]}>
+  <Box mt="25px" p="0 30px" display="flex" justifyContent="space-between" alignItems="center">
+    <Typography variant="h5" fontWeight="600" color={colors.orangeAccent[400]}>
+      Blocked Stock Value per time processing
+    </Typography>
+  </Box>
+  <Box display="flex" justifyContent="center"   alignItems="center" height="250px" marginTop="40px" >
+    <Box width="75%" height="120%">
+      <BarChart data={pieChartDataByBlockingPeriod} />
+    </Box>
+  </Box>
+</Box>
+        
+         <Box gridColumn="span 15" gridRow="span 2" backgroundColor={colors.primary[100]}>
           <Box mt="25px" p="0 30px" display="flex" justifyContent="space-between" alignItems="center">
           <Typography variant="h5" fontWeight="600" color={colors.orangeAccent[400]}>
             Blocked Stock Value per product type
@@ -375,24 +410,16 @@ const columns = [
             <PieChart data={pieChartDataByComponent} />
           </Box>
         </Box> 
-        <Box gridColumn="span 15" gridRow="span 2" backgroundColor={colors.primary[100]}>
-          <Box mt="25px" p="0 30px" display="flex" justifyContent="space-between" alignItems="center">
-          <Typography variant="h5" fontWeight="600" color={colors.orangeAccent[400]}>
-            Blocked Stock Value per product type
-          </Typography>
-          </Box>
-          <Box height="250px" marginTop="40px">
-            <PieChart data={pieChartDataByBlockingPeriod} />
-          </Box>
-        </Box> 
-      </Box>
-      <Box m="20px">
-      <Box gridColumn="span 15" gridRow="span 4" backgroundColor={colors.primary[100]}>
-      <Box mt="25px" p="0 30px" display="flex" justifyContent="space-between" alignItems="center">
+        <Box gridColumn="span 15" gridRow="span 3"  overflow="auto" backgroundColor={colors.primary[100]}>
+      <Box mt="30px" p="0 30px" display="flex" justifyContent="space-between" alignItems="center">
         <Typography variant="h5" fontWeight="600" color={colors.orangeAccent[400]}>
-          Blocked Stock Matrix by Component and Blocking Period
+          Blocked Stock Matrix
         </Typography>
-      </Box>
+      </Box> 
+       
+      
+      
+      
 
       <Box mt="20px" p="20px">
         <table style={{ width: '100%', textAlign: 'center', borderCollapse: 'collapse' }}>

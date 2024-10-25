@@ -75,6 +75,7 @@ const Sidebar = () => {
   return (
         <Box
       sx={{
+        
         "& .pro-sidebar-inner": {
           background: `${colors.orangeAccent[500]} !important`, // Lighter orange
         },
@@ -82,7 +83,7 @@ const Sidebar = () => {
           backgroundColor: "transparent !important",
         },
         "& .pro-inner-item": {
-          padding: "10px 20px !important", // Decreased padding
+          padding: "10px 25px !important", // Decreased padding
         },
         "& .pro-inner-item:hover": {
           color: "#333 !important", // Darker hover color
@@ -99,7 +100,7 @@ const Sidebar = () => {
         onClick={() => setIsCollapsed(!isCollapsed)}
         icon={isCollapsed ? <MenuOutlinedIcon /> : undefined}
         style={{
-          margin: "10px 0 40px 0", // Adjust margin to reduce top space
+          margin: "1px 0 25px 0", // Adjust margin to reduce top space
           color: colors.grey[100],
         }}
       >
@@ -116,7 +117,7 @@ const Sidebar = () => {
               style={{
                 width: "120px", // Reduced size
                 height: "120px",
-                borderRadius: "10px", // Add rounded corners
+              borderRadius: "10px", // Add rounded corners
               }}
             /> */}
             <IconButton onClick={() => setIsCollapsed(!isCollapsed)}>
@@ -157,7 +158,7 @@ const Sidebar = () => {
             <Box
               style={{
                 margin: "20px 0",
-                color: colors.grey[300],
+                color: colors.primary[900],
                 fontWeight: "bold",
                 display: "flex",
                 alignItems: "center",

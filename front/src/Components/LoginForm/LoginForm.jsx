@@ -20,33 +20,37 @@ function LoginForm() {
     const [role, setRole] = useState('user');
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
+    const [loading, setLoading] = useState(false); // For showing loading indicators
     const [plants, setPlants] = useState([]);
     const [departments, setDepartments] = useState([]);
     const [teams, setTeams] = useState([]);
     const [roles, setRoles] = useState([]);
     const navigate = useNavigate();
 
+
     useEffect(() => {
         const loadData = async () => {
             try {
+                setLoading(true); // Show loading while data is fetched
                 const plantsData = await fetchPlants();
                 setPlants(plantsData);
-
                 const departmentsData = await fetchDepartments();
                 setDepartments(departmentsData);
-
                 const teamsData = await fetchTeams();
                 setTeams(teamsData);
-
                 const rolesData = await fetchRoles();
                 setRoles(rolesData);
+                setLoading(false); // Hide loading after data is fetched
             } catch (error) {
-                setError('Failed to load data');
+                setError('Failed to load data.');
+                setLoading(false);
             }
         };
 
         loadData();
     }, []);
+
+
 
     useEffect(() => {
         // Reset error and success messages when toggling between login and register
@@ -54,10 +58,18 @@ function LoginForm() {
         setSuccess('');
     }, [isRegister]);
 
+    const isValidEmail = (email) => /\S+@\S+\.\S+/.test(email);
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
         setSuccess('');
+
+         
+        if (!isValidEmail(email)) {
+            setError('Please enter a valid email address.');
+            return;
+        }
 
         if (isRegister) {
             if (password !== confirmPassword) {
@@ -65,33 +77,43 @@ function LoginForm() {
                 return;
             }
 
+            if (password.length < 6) {
+                setError('Password should be at least 6 characters.');
+                return;
+            }
+
             try {
+                setLoading(true); // Show loading while registering
                 const data = await registerUser({ email, password, fullName, plant, department, team, role });
-                setSuccess('Registration successful!');
+                setSuccess('Registration successful! Redirecting...');
                 setTimeout(() => {
                     setIsRegister(false);
                 }, 1000);
             } catch (err) {
-                if (err.response && err.response.data) {
-                    const serverErrors = err.response.data.errors;
-                    setError(serverErrors.join(' '));
-                } else {
-                    setError('Registration failed. Please try again.');
-                }
+                setError('Registration failed. Please try again.');
+            } finally {
+                setLoading(false); // Hide loading after registration attempt
             }
         } else {
             try {
+                setLoading(true); // Show loading while logging in
                 const data = await loginUser(email, password);
                 localStorage.setItem('token', data.token);
-                localStorage.setItem('userRole', data.role); // Store role information
+                localStorage.setItem('userRole', data.role);
+                localStorage.setItem('userTeam', data.team)
+                localStorage.setItem('userPlant', data.plant);
                 console.log('JWT Token:', data.token);
                 console.log('User Role:', data.role);
-                setSuccess('Login successful!');
+                console.log('User Team:', data.team);
+                console.log('User Plant:', data.plant);
+                setSuccess('Login successful! Redirecting...');
                 setTimeout(() => {
                     navigate('/home');
                 }, 1000);
             } catch (err) {
                 setError('Login failed. Please check your email and password.');
+            } finally {
+                setLoading(false); // Hide loading after login attempt
             }
         }
     };
@@ -104,7 +126,7 @@ function LoginForm() {
                 {success && <p className="success-message">{success}</p>}
                 <div className="input-box">
                     <input
-                        type="text"
+                        type="email"
                         placeholder="Email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
@@ -198,7 +220,9 @@ function LoginForm() {
                         </div>
                     </>
                 )}
-                <button type='submit'>{isRegister ? 'Register' : 'Login'}</button>
+                <button type='submit' disabled={loading}>
+                    {loading ? 'Processing...' : isRegister ? 'Register' : 'Login'}
+                </button>
                 <div className="register-link">
                     <p>
                         {isRegister ? (
@@ -220,3 +244,4 @@ function LoginForm() {
 }
 
 export default LoginForm;
+
