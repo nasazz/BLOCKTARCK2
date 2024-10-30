@@ -14,6 +14,7 @@ import EuroIcon from '@mui/icons-material/Euro';
 import { importBlockedStockData, getBlockedStockData, getMissingFieldsCount, deleteAllBlockedStockData } from '../../Services/BlockedStockService';
 import { groupBy, sumBy } from 'lodash';
 import {useChartData}  from '../../ChartDataContext';
+import AddIcon from '@mui/icons-material/Add';
 
 
 
@@ -35,8 +36,12 @@ const Dashboard = () => {
   const [pieChartData, setPieChartData] = useState([]);
   const [pieChartDataByComponent, setPieChartDataByComponent] = useState([]);
   const [pieChartDataByBlockingPeriod, setPieChartDataByBlockingPeriod] = useState([]);
- 
+  const [expandMainCard, setExpandMainCard] = useState(false);
+  const [expandTeam, setExpandTeam] = useState({ MCA: false, CAS: false, Stamping: false, UNO: false });
 
+
+  const toggleMainCard = () => setExpandMainCard(!expandMainCard);
+  const toggleTeam = (team) => setExpandTeam(prev => ({ ...prev, [team]: !prev[team] }));
 
 
   const [expandedRows, setExpandedRows] = useState({});
@@ -138,11 +143,7 @@ const Dashboard = () => {
   }))
 ];
 
-const columns = [
-  { field: 'category', headerName: 'Category', flex: 1 },
-  { field: 'value', headerName: 'Value', flex: 1 },
-  { field: 'type', headerName: 'Type', flex: 1 }
-];
+
 
   const handleFileUpload = async (event) => {
     const file = event.target.files[0];
@@ -197,231 +198,222 @@ const columns = [
 
   return (
     <Box m="20px">
-      <Box display="flex" justifyContent="space-between" alignItems="center">
-        <Header title="DASHBOARD" subtitle="Welcome to your dashboard" />
-       {/*  <Box display="flex" gap="10px">
-          {!isQuality && (
-            <>
-              <Button
-                sx={{
-                  backgroundColor: colors.orangeAccent[600],
-                  color: colors.grey[100],
-                  fontSize: "14px",
-                  fontWeight: "bold",
-                  padding: "10px 20px",
-                }}
-                onClick={handleDeleteClick}
-              >
-                <DeleteOutline sx={{ mr: "10px" }} />
-                Delete FILE
-              </Button>
-              <input
-                type="file"
-                accept=".xlsx, .xls, .xlsm"
-                ref={fileInputRef}
-                style={{ display: "none" }}
-                onChange={handleFileUpload}
-              />
-              <Button
-                sx={{
-                  backgroundColor: colors.orangeAccent[500],
-                  color: colors.grey[100],
-                  fontSize: "14px",
-                  fontWeight: "bold",
-                  padding: "10px 20px",
-                }}
-                onClick={handleImportClick}
-              >
-                <DownloadOutlinedIcon sx={{ mr: "10px" }} />
-                Import FILE
-              </Button>
-            </>
-          )}
-        </Box> */}
-      </Box>
+    <Box display="flex" justifyContent="space-between" alignItems="center">
+      <Header title="DASHBOARD" subtitle="Welcome to your dashboard" />
+    </Box>
 
-      {/* GRID & CHARTS */}
-      <Box
-        display="grid"
-        gridTemplateColumns="repeat(15, 4fr)"
-        gridAutoRows="140px"
-        gap="20px"
-      >
-        {/* ROW 1 */}
-        <Box
-          gridColumn="span 3"
-          backgroundColor={colors.primary[100]}
-          display="flex"
-          alignItems="center"
-          justifyContent="center"
-        >
-          <StatBox
-            title={
-              <span style={{ textAlign: 'center', display: 'block' }}>
-                <span style={{ color: colors.orangeAccent[600] }}>
-                {formatNumber(totalValue)}
-                </span>
-              </span>
-            }
-            subtitle="Total Blocked Stock Value"
-            icon={
-              <EuroIcon
-              sx={{ color: colors.orangeAccent[600], fontSize: "25px" }}
-            />
-            }
-          />
-        </Box>
+    {/* Main Total Blocked Stock Card */}
+    <Box
+      gridColumn="span 15"
+      gridRow="span 1"
+      backgroundColor={colors.primary[100]}
+      display="flex"
+      alignItems="center"
+      justifyContent="center"
+      position="relative"
+      onClick={toggleMainCard} // Add onClick to expand
+      sx={{
+        borderRadius: "8px",
+        padding: "20px",
+        boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
+        marginBottom: "20px",
+        cursor: 'pointer', // Change cursor to pointer
+      }}
+    >
+      <StatBox
+        title={<span style={{ color: colors.orangeAccent[600], fontSize: "45px" }}>{formatNumber(totalValue)}</span>}
+        subtitle="Total Blocked Stock"
+        icon={<EuroIcon sx={{ color: colors.orangeAccent[600], fontSize: "25px" }} />}
+      />
+    </Box>
 
-        <Box
-          gridColumn="span 3"
-          backgroundColor={colors.primary[100]}
-          display="flex"
-          alignItems="center"
-          justifyContent="center"
-        >
-          <StatBox
-            title={
-              <span style={{ textAlign: 'center', display: 'block' }}>
-                <span style={{ color: colors.orangeAccent[600] }}>
-                {formatNumber(sumBy(blockedStockData.filter(item => item.team === 'MCA'), 'value'))}
-                </span>
-              </span>
-            }
-            subtitle="Total MCA Team Blocked Stock"
-            icon={
-              <EuroIcon
-              sx={{ color: colors.orangeAccent[600], fontSize: "25px" }}
-            />
-            }
-          />
-        </Box>
-        
-        <Box
-          gridColumn="span 3"
-          backgroundColor={colors.primary[100]}
-          display="flex"
-          alignItems="center"
-          justifyContent="center"
-        >
-          <StatBox
-            title={
-              <span style={{ textAlign: 'center', display: 'block' }}>
-                <span style={{ color: colors.orangeAccent[600] }}>
-                {formatNumber(sumBy(blockedStockData.filter(item => item.team === 'CAS'), 'value'))}
-                </span>
-              </span>
-            }
-            subtitle="Total CAS Team Blocked Stock"
-            icon={
-              <EuroIcon
-                sx={{ color: colors.orangeAccent[600], fontSize: "25px" }}
-              />
-            }
-          />
-        </Box>
-
-
-        <Box gridColumn="span 3" backgroundColor={colors.primary[100]} display="flex" alignItems="center" justifyContent="center">
-          <StatBox
-            title={
-              <span style={{ textAlign: 'center', display: 'block' }}>
-                <span style={{ color: colors.orangeAccent[600] }}>
-                {formatNumber(sumBy(blockedStockData.filter(item => item.team === 'CAS'), 'value'))}
-                </span>
-              </span>
-            } 
-            subtitle="Total Stamping Team Blocked Stock"
-            icon={<EuroIcon
-              sx={{ color: colors.orangeAccent[600], fontSize: "25px" }}
-            />}
-          />
-        </Box>
-
+    {/* Expanded View of Teams (MCA, CAS, Stamping, UNO) */}
+    {expandMainCard && (
+      <Box display="grid" gridTemplateColumns="repeat(4, 1fr)" gap="20px">
+        {['MCA', 'CAS', 'Stamping', 'UNO'].map(team => (
           <Box
-            gridColumn="span 3"
+            key={team}
             backgroundColor={colors.primary[100]}
             display="flex"
+            flexDirection="column"
             alignItems="center"
             justifyContent="center"
+            position="relative"
+            sx={{
+              borderRadius: "8px",
+              padding: "20px",
+              boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
+            }}
           >
             <StatBox
-              title={<span style={{ color: colors.orangeAccent[600] }}>{missingFieldsCount}</span>}
-              subtitle="Rows Missing Quality Fields"
-              icon={<NotificationsOutlinedIcon sx={{ color: colors.orangeAccent[600], fontSize: "26px" }} />}
+              title={<span style={{ color: colors.orangeAccent[600] }}>{formatNumber(sumBy(blockedStockData.filter(item => item.team === team), 'value'))}</span>}
+              subtitle={`Total ${team} Team Blocked Stock`}
+              icon={<EuroIcon sx={{ color: colors.orangeAccent[600], fontSize: "25px" }} />}
             />
-          </Box>
-  
+            <IconButton onClick={() => toggleTeam(team)} style={{ position: 'absolute', top: '10px', right: '10px' }}>
+              <AddIcon />
+            </IconButton>
 
-        {/* ROW 2 */}
-        <Box gridColumn="span 15" gridRow="span 2" backgroundColor={colors.primary[100]}>
-          <Box mt="25px" p="0 30px" display="flex" justifyContent="space-between" alignItems="center">
-            <Typography variant="h5" fontWeight="600" color={colors.orangeAccent[400]}>
-              Blocked Stock Value Evolution
-            </Typography>
-          </Box>
-          <Box
-            height="250px"
-            m="-20px 0 0 0"
-            display="flex" // Enables flexbox
-            justifyContent="center" // Centers horizontally
-            alignItems="center" // Centers vertically
-          >
-            {chartData.length > 0 ? (
-              <LineChart data={chartData} isDashboard={true} />
-            ) : (
-              <Typography variant="h5" fontWeight="300" sx={{ marginTop: '20px' }}>No data available</Typography> // Fallback UI with margin
+            {/* Enhanced Expanded View for Plants and Quality Inputs */}
+            {expandTeam[team] && (
+              <Box mt={2} display="grid" gridTemplateColumns="repeat(2, 1fr)" gap="35px">
+                {['Plant 1', 'Plant 2', 'Plant 3', 'Quality Inputs'].map(subItem => (
+                  <Box
+                    key={subItem}
+                    backgroundColor={colors.primary[200]} // Slightly different shade for visual distinction
+                    p="20px"
+                    textAlign="center"
+                    sx={{
+                      borderRadius: "12px",
+                      boxShadow: "0 6px 12px rgba(0, 0, 0, 0.15)", // Stronger shadow for visual pop
+                      transform: "scale(1.05)", // Slight enlargement
+                      transition: "transform 0.2s ease-in-out",
+                      "&:hover": { transform: "scale(1.1)" },
+                    }}
+                  >
+                    <Typography variant="h6" fontWeight="600" color={colors.orangeAccent[600]}>{subItem}</Typography>
+                    <Typography variant="h4" color={colors.orangeAccent[700]} sx={{ fontWeight: "bold", marginTop: "10px" }}>
+                      {formatNumber(sumBy(blockedStockData.filter(item => item.team === team && item.subItem === subItem), 'value'))}
+                    </Typography>
+                  </Box>
+                ))}
+              </Box>
             )}
           </Box>
-        </Box>
-
-  {/* /* {/* ROW 3 */}
-
-     <Box gridColumn="span 7" gridRow="span 2"  backgroundColor={colors.primary[100]}>
-          <Box mt="25px" p="0 30px" display="flex" justifyContent="space-between" alignItems="center">
-          <Typography variant="h5" fontWeight="600" color={colors.orangeAccent[400]}>
-            Blocked Stock Value per Quality Decision
-          </Typography>
-          </Box>
-          <Box height="250px" marginTop="40px">
-            <PieChart data={pieChartData} />
-          </Box>
-        </Box> 
-
-        <Box gridColumn="span 8" gridRow="span 2" backgroundColor={colors.primary[100]}>
+        ))}
+      </Box>
+    )}
+  
+      {/* Blocked Stock Value Evolution Chart */}
+      <Box display="grid" gridTemplateColumns="repeat(12, 1fr)" gap="20px">
+<Box
+  gridColumn="span 15"
+  gridRow="span 2"
+  backgroundColor={colors.primary[100]}
+  mt="25px"
+  mb="25px"
+  sx={{
+    borderRadius: "12px",
+    boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
+    transition: "transform 0.2s ease-in-out",
+    "&:hover": { transform: "scale(1.02)" },
+  }}
+>
   <Box mt="25px" p="0 30px" display="flex" justifyContent="space-between" alignItems="center">
-    <Typography variant="h5" fontWeight="600" color={colors.orangeAccent[400]}>
-      Blocked Stock Value per time processing
+    <Typography variant="h5" fontWeight="600"  fontSize="19px" color={colors.orangeAccent[400]}>
+      Blocked Stock Value Evolution
     </Typography>
   </Box>
-  <Box display="flex" justifyContent="center"   alignItems="center" height="250px" marginTop="40px" >
-    <Box width="75%" height="120%">
+  <Box height="250px" display="flex" justifyContent="center" alignItems="center" m="-20px 0 0 0">
+    {chartData.length > 0 ? (
+      <LineChart data={chartData} isDashboard={true} />
+    ) : (
+      <Typography variant="h5" fontWeight="300" sx={{ marginTop: '20px' }}>No data available</Typography>
+    )}
+  </Box>
+</Box>
+</Box>
+
+{/* Blocked Stock Value per Quality Decision Chart */}
+<Box display="grid" gridTemplateColumns="repeat(12, 1fr)" gap="20px">
+<Box
+  gridColumn="span 6"
+  gridRow="span 2"
+  backgroundColor={colors.primary[100]}
+  mb="20px"
+  sx={{
+    borderRadius: "12px",
+    boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
+    transition: "transform 0.2s ease-in-out",
+    "&:hover": { transform: "scale(1.02)" },
+  }}
+>  
+<Box mt="25px" p="0 30px" display="flex" justifyContent="space-between" alignItems="center">
+<Typography variant="h5" fontWeight="600" color={colors.orangeAccent[400]}>
+Blocked Stock Value per Quality Decision
+</Typography>
+  </Box>
+  <Box display="flex" justifyContent="center" alignItems="center" height="250px" marginTop="40px">
+    <Box width="85%" height="110%">
+      <BarChart data={pieChartData} />
+    </Box>
+  </Box>
+</Box>
+
+{/* Blocked Stock Value per Time Processing Chart */}
+<Box
+  gridColumn="span 6"
+  gridRow="span 2"
+  backgroundColor={colors.primary[100]}
+  mb="20px"
+  sx={{
+    borderRadius: "12px",
+    boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
+    transition: "transform 0.2s ease-in-out",
+    "&:hover": { transform: "scale(1.02)" },
+  }}
+>
+  <Box mt="25px" p="0 30px" display="flex" justifyContent="space-between" alignItems="center">
+    <Typography variant="h5" fontWeight="600" color={colors.orangeAccent[400]}>
+      Blocked Stock Value per Time Processing
+    </Typography>
+  </Box>
+  <Box display="flex" justifyContent="center" alignItems="center" height="250px" marginTop="40px">
+    <Box width="85%" height="110%">
       <BarChart data={pieChartDataByBlockingPeriod} />
     </Box>
   </Box>
 </Box>
-        
-         <Box gridColumn="span 15" gridRow="span 2" backgroundColor={colors.primary[100]}>
-          <Box mt="25px" p="0 30px" display="flex" justifyContent="space-between" alignItems="center">
-          <Typography variant="h5" fontWeight="600" color={colors.orangeAccent[400]}>
-            Blocked Stock Value per product type
-          </Typography>
-          </Box>
-          <Box height="250px" marginTop="40px">
-            <PieChart data={pieChartDataByComponent} />
-          </Box>
-        </Box> 
-        <Box gridColumn="span 15" gridRow="span 3"  overflow="auto" backgroundColor={colors.primary[100]}>
-      <Box mt="30px" p="0 30px" display="flex" justifyContent="space-between" alignItems="center">
-        <Typography variant="h5" fontWeight="600" color={colors.orangeAccent[400]}>
-          Blocked Stock Matrix
-        </Typography>
-      </Box> 
-       
+</Box>
+
+{/* Blocked Stock Value per Product Type Chart */}
+<Box display="grid" gridTemplateColumns="repeat(12, 1fr)" gap="20px">
+<Box
+  gridColumn="span 15"
+  gridRow="span 2"
+  backgroundColor={colors.primary[100]}
+  mb="20px"
+  sx={{
+    borderRadius: "12px",
+    boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
+    transition: "transform 0.2s ease-in-out",
+    "&:hover": { transform: "scale(1.02)" },
+  }}
+>
+  <Box mt="25px" p="0 30px" display="flex" justifyContent="space-between" alignItems="center">
+    <Typography variant="h5" fontWeight="600" color={colors.orangeAccent[400]}>
+      Blocked Stock Value per Product Type
+    </Typography>
+  </Box>
+  <Box height="250px" marginTop="40px">
+    <PieChart data={pieChartDataByComponent} />
+  </Box>
+</Box>
+
+{/* Blocked Stock Matrix */}
+<Box
+  gridColumn="span 15"
+  gridRow="span 3"
+  backgroundColor={colors.primary[100]}
+  overflow="auto"
+  sx={{
+    borderRadius: "12px",
+    boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
+    transition: "transform 0.2s ease-in-out",
+    "&:hover": { transform: "scale(1.02)" },
+  }}
+>
+  <Box mt="30px" p="0 30px" display="flex" justifyContent="space-between" alignItems="center">
+    <Typography variant="h5" fontWeight="600" color={colors.orangeAccent[400]}>
+      Blocked Stock Matrix
+    </Typography>
+  </Box>
+
       
       
       
 
-      <Box mt="20px" p="20px">
+      <Box mt="5px" p="20px">
         <table style={{ width: '100%', textAlign: 'center', borderCollapse: 'collapse' }}>
           <thead>
             <tr>
@@ -516,9 +508,10 @@ const columns = [
         </table>
       </Box>
     </Box>
+    </Box>
+</Box>
+   
     
-    </Box>
-    </Box>
     
   );
 };

@@ -61,19 +61,20 @@ useEffect(() => {
       // Get the user's team from local storage
       const userTeam = localStorage.getItem('userTeam');
       const userPlant = localStorage.getItem('userPlant');
-        let filteredData = data;
-
-        // If user is not admin, filter by team and plant
-       // if (userRole !== 'admin') {
-          filteredData = filteredData.filter(item => item.team === userTeam && item.plant === userPlant);
-        //}
-
-
-      // Sort the filtered data
-      const sortedData = filteredData.sort((a, b) => new Date(b.createdOn) - new Date(a.createdOn));
+      const userRole  = localStorage.getItem('userRole');
       
-      // Set the sorted filtered data to state
-      setBlockedStockData(sortedData);
+       // Filter data based on team and plant if the user is not an admin
+       const filteredData = userRole === 'admin'
+       ? data
+       : data.filter(item => item.team === userTeam && item.plant === userPlant);
+ 
+     // Sort the filtered data by createdOn date
+     const sortedData = filteredData.sort((a, b) => new Date(b.createdOn) - new Date(a.createdOn));
+ 
+     // Update the state with the sorted data
+     setBlockedStockData(sortedData);
+ 
+
     } catch (error) {
       console.error('Error fetching blocked stock data:', error);
     }

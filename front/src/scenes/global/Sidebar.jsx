@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { ProSidebar, Menu, MenuItem } from "react-pro-sidebar";
 import { Box, IconButton, Typography, useTheme } from "@mui/material";
@@ -73,129 +72,81 @@ const Sidebar = () => {
   const isAdmin = userRole === 'admin';
 
   return (
-        <Box
+    <Box
       sx={{
-        
         "& .pro-sidebar-inner": {
-          background: `${colors.orangeAccent[500]} !important`, // Lighter orange
+          background: `linear-gradient(135deg, ${colors.orangeAccent[500]} 0%, ${colors.orangeAccent[700]} 100%) !important`, // Subtle gradient
         },
         "& .pro-icon-wrapper": {
           backgroundColor: "transparent !important",
         },
         "& .pro-inner-item": {
-          padding: "10px 25px !important", // Decreased padding
+          padding: "8px 20px !important", // Refined padding
+          fontSize: "15px", // Slightly smaller font for simplicity
+          color: colors.grey[100],
         },
         "& .pro-inner-item:hover": {
-          color: "#333 !important", // Darker hover color
+          color: "#555 !important", // Lighter hover effect
+          borderLeft: "3px solid #fff", // Left border for a modern hover style
         },
         "& .pro-menu-item.active": {
-          color: "#000 !important", // Stronger active color
+          color: "#000 !important",
+          borderLeft: "4px solid #fff", // Thicker border on active item for visual clarity
+          backgroundColor: "rgba(255, 255, 255, 0.1) !important", // Subtle background for active item
         },
       }}
     >
       <ProSidebar collapsed={isCollapsed}>
-    <Menu iconShape="square">
-      {/* LOGO AND MENU ICON */}
-      <MenuItem
-        onClick={() => setIsCollapsed(!isCollapsed)}
-        icon={isCollapsed ? <MenuOutlinedIcon /> : undefined}
-        style={{
-          margin: "1px 0 25px 0", // Adjust margin to reduce top space
-          color: colors.grey[100],
-        }}
-      >
-        {!isCollapsed && (
-          <Box
-            display="flex"
-            justifyContent="center"
-            alignItems="center"
-            margin="15px 0"
-          >
-         {/*    <img
-              src={logo}
-              alt="Logo"
-              style={{
-                width: "120px", // Reduced size
-                height: "120px",
-              borderRadius: "10px", // Add rounded corners
-              }}
-            /> */}
-            <IconButton onClick={() => setIsCollapsed(!isCollapsed)}>
-              <MenuOutlinedIcon />
-            </IconButton>
-          </Box>
-        )}
-      </MenuItem>
+  <Menu iconShape="square">
+    {/* Collapse Button */}
+    <MenuItem
+      onClick={() => setIsCollapsed(!isCollapsed)}
+      icon={isCollapsed ? <MenuOutlinedIcon /> : undefined}
+      style={{
+        margin: "10px 0 20px 0",
+        color: colors.grey[100],
+        display: "flex",
+        justifyContent: isCollapsed ? "center" : "space-between", // Align button properly
+        padding: isCollapsed ? "0" : "10px 20px", // Spacing when expanded
+      }}
+    >
+      {/* Display IconButton when expanded */}
+      {!isCollapsed && (
+        <IconButton onClick={() => setIsCollapsed(!isCollapsed)}>
+          <MenuOutlinedIcon />
+        </IconButton>
+      )}
+    </MenuItem>
 
-            {/* Menu Items */}
-          <Box paddingLeft={isCollapsed ? undefined : "5%"}>
-            <Item
-              title="HOME"
-              to="/home"
-              icon={<HomeOutlinedIcon />}
-              selected={selected}
-              setSelected={setSelected}
-            />
-            <Item
-              title="Dashboard"
-              to="/dashboard"
-              icon={<MdSpaceDashboard />}
-              selected={selected}
-              setSelected={setSelected}
-            />
+          <Box paddingLeft={isCollapsed ? undefined : "10px"}>
+            <Item title="HOME" to="/home" icon={<HomeOutlinedIcon />} selected={selected} setSelected={setSelected} />
+            <Item title="Dashboard" to="/dashboard" icon={<MdSpaceDashboard />} selected={selected} setSelected={setSelected} />
+            <Item title="Blocked Stock" to="/contacts" icon={<ContactsOutlinedIcon />} selected={selected} setSelected={setSelected} />
 
-            <Item
-              title="Blocked Stock"
-              to="/contacts"
-              icon={<ContactsOutlinedIcon />}
-              selected={selected}
-              setSelected={setSelected}
-            />
-              
-              {/* App Management Label */}
-              {isAdmin && (
-
-            <Box
-              style={{
-                margin: "20px 0",
-                color: colors.primary[900],
-                fontWeight: "bold",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: isCollapsed ? "center" : "flex-start",
-              }}
-            >
-              <AppsIcon style={{ marginLeft: isCollapsed ? "0px" : "10px" }} /> {/* Shift the icon to the right */}
-              {!isCollapsed && (
-                <Typography variant="h6" sx={{ marginLeft: "10px" }}>
-                  App Management
-                </Typography>
-              )}
-            </Box>
-            )}
-
-            {/* Conditionally render "Manage Team" if user is Admin */}
             {isAdmin && (
-              <Item
-                title="Manage Team"
-                to="/team"
-                icon={<PeopleOutlinedIcon />}
-                selected={selected}
-                setSelected={setSelected}
-              />
+              <Box
+                style={{
+                  margin: "15px 0",
+                  color: colors.primary[900],
+                  fontWeight: "bold",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: isCollapsed ? "center" : "flex-start",
+                  // borderTop: 1px solid ${colors.grey[800]}, // Separator line
+                  paddingTop: "10px",
+                }}
+              >
+                <AppsIcon style={{ marginLeft: isCollapsed ? "0px" : "10px" }} />
+                {!isCollapsed && <Typography variant="h6" sx={{ marginLeft: "10px" }}>App Management</Typography>}
+              </Box>
             )}
+
+            {isAdmin && <Item title="Manage Team" to="/team" icon={<PeopleOutlinedIcon />} selected={selected} setSelected={setSelected} />}
           </Box>
 
-          {/* Conditionally render "Configuration" if user is Admin */}
           {isAdmin && (
-            <Box paddingLeft={isCollapsed ? undefined : "10%"}>
-              <Item
-                title="Configuration"
-                to="/configuration"
-                icon={<SettingsIcon />}
-                selected={selected}
-                setSelected={setSelected}
-              />
+            <Box paddingLeft={isCollapsed ? undefined : "10px"}>
+              <Item title="Configuration" to="/configuration" icon={<SettingsIcon />} selected={selected} setSelected={setSelected} />
             </Box>
           )}
         </Menu>

@@ -105,52 +105,35 @@ namespace back.Controllers
             return Ok(user);
         }
 
-        [HttpPut("{id}")]
-        //[Authorize(Roles = "admin")]
-        public async Task<IActionResult> UpdateUser(Guid id, [FromBody] UserRegisterDto updateDto)
-        {
-            var user = await _context.Users.FindAsync(id);
-            if (user == null)
-                return NotFound();
+       [HttpPut("{id}")]
+public async Task<IActionResult> UpdateUser(Guid id, [FromBody] UserUpdateDto userUpdateDto)
+{
+    var user = await _context.Users.FindAsync(id);
+    if (user == null)
+        return NotFound();
 
-            // Fetch the actual names based on the provided IDs
-            var plant = await _context.Plants.FindAsync(Guid.Parse(updateDto.Plant));
-            var department = await _context.Departments.FindAsync(Guid.Parse(updateDto.Department));
-            var team = await _context.Teams.FindAsync(Guid.Parse(updateDto.Team));
-            var role = await _roleManager.FindByIdAsync(updateDto.Role);
+    // Validate if the Plant, Department, and Team names exist in their respective tables
+    var plant = await _context.Plants.FirstOrDefaultAsync(p => p.Name == userUpdateDto.Plant);
+    var department = await _context.Departments.FirstOrDefaultAsync(d => d.Name == userUpdateDto.Department);
+    var team = await _context.Teams.FirstOrDefaultAsync(t => t.Name == userUpdateDto.Team);
 
-            if (plant == null || department == null || team == null || role == null)
-                return BadRequest("Invalid references for Plant, Department, Team, or Role.");
+    if (plant == null || department == null || team == null)
+        return BadRequest("Invalid references for Plant, Department, or Team.");
 
-            user.UserName = updateDto.Email;
-            user.Email = updateDto.Email;
-            user.FullName = updateDto.FullName;
-            user.Plant = plant.Name; // Store the actual name
-            user.Department = department.Name; // Store the actual name
-            user.Team = team.Name; // Store the actual name
-            user.Role = role.Name; // Store the actual name
+    // Update fields with the validated names
+    user.FullName = userUpdateDto.FullName;
+    user.Plant = plant.Name;
+    user.Department = department.Name;
+    user.Team = team.Name;
+    user.Role = userUpdateDto.Role;
 
-            // Update the user's role in UserManager
-            var currentRoles = await _userManager.GetRolesAsync(user);
-            var removeRolesResult = await _userManager.RemoveFromRolesAsync(user, currentRoles);
-            if (!removeRolesResult.Succeeded)
-                return BadRequest(removeRolesResult.Errors);
+    // Save changes
+    _context.Users.Update(user);
+    await _context.SaveChangesAsync();
 
-            var addRoleResult = await _userManager.AddToRoleAsync(user, role.Name);
-            if (!addRoleResult.Succeeded)
-                return BadRequest(addRoleResult.Errors);
+    return Ok(user);
+}
 
-            // Save changes
-            var result = await _userManager.UpdateAsync(user);
-            if (!result.Succeeded)
-                return BadRequest(result.Errors);
-
-            // Generate a new token with the updated role
-            var roles = await _userManager.GetRolesAsync(user);
-            var token = _tokenService.GenerateToken(user, roles);
-
-            return Ok(new { User = user, Token = token });
-        }
         [HttpDelete("{id}")]
         [Authorize(Roles = "admin")]
         public async Task<IActionResult> DeleteUser(Guid id)
