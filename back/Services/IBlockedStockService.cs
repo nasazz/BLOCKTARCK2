@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using back.Models;
+using back.Dtos;
+
 
 namespace back.Services
 {
@@ -14,6 +16,7 @@ namespace back.Services
         Task<BlockedStock> GetBlockedStockByCustomIDAsync(string customID);
         Task UpdateBlockedStockAsync(Guid id, BlockedStock updatedBlockedStock); 
         Task<int> GetMissingFieldsCountAsync();
+        Task<IEnumerable<MissingFieldsByPlantAndTeam>> GetMissingFieldsCountByPlantAndTeamAsync();
 
 
     }

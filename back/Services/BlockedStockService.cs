@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using back.Data;
 using back.Models;
+using back.Dtos;
 using Microsoft.EntityFrameworkCore;
 
 namespace back.Services
@@ -83,5 +84,22 @@ namespace back.Services
                               string.IsNullOrEmpty(bs.codeExpectedUsageDecision) ||
                               string.IsNullOrEmpty(bs.scrapRequestNo));
     }
+   public async Task<IEnumerable<MissingFieldsByPlantAndTeam>> GetMissingFieldsCountByPlantAndTeamAsync()
+{
+    return await _context.BlockedStocks
+        .GroupBy(bs => new { bs.Team, bs.Plant }) // Grouping by both Team and Plant
+        .Select(g => new MissingFieldsByPlantAndTeam
+        {
+            Team = g.Key.Team,
+            Plant = g.Key.Plant,
+            MissingFieldsCount = g.Count(bs => 
+                string.IsNullOrEmpty(bs.CodeFunctionBlocking) || 
+                string.IsNullOrEmpty(bs.codeReason) ||
+                string.IsNullOrEmpty(bs.codeExpectedUsageDecision) ||
+                string.IsNullOrEmpty(bs.scrapRequestNo))
+        })
+        .ToListAsync();
+}
+
 }
 }

@@ -7,7 +7,8 @@ namespace back.Models
     {
         [Key]
         public Guid Id { get; set; } // Guid for database ID
-        
+        public DateTime ImportTimestamp { get; set; } // New property to track import time
+
         public string Plant { get; set; } = string.Empty;
         public string Material { get; set; } = string.Empty;
         public string MaterialDescription { get; set; } = string.Empty;
