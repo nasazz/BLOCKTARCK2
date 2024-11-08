@@ -11,7 +11,7 @@ import StatBox from "../../Components/StatBox";
 import PieChart from "../../Components/PieChart";
 import BarChart from "../../Components/BarChart";
 import EuroIcon from '@mui/icons-material/Euro';
-import { importBlockedStockData, getBlockedStockData, getMissingFieldsCount, deleteAllBlockedStockData } from '../../Services/BlockedStockService';
+import { importBlockedStockData, getBlockedStockData, getMissingFieldsCountByPlantAndTeam, deleteAllBlockedStockData } from '../../Services/BlockedStockService';
 import { groupBy, sumBy } from 'lodash';
 import {useChartData}  from '../../ChartDataContext';
 import AddIcon from '@mui/icons-material/Add';
@@ -81,7 +81,8 @@ const Dashboard = () => {
       const total = sumBy(data, 'value');
       const totalInEuro = total * conversionRateToEuro; // Convert to euros
       setTotalValue(totalInEuro); // Update the state with the euro value
-      const missingCount = await getMissingFieldsCount();
+
+      const missingCount = await getMissingFieldsCountByPlantAndTeam();
       setMissingFieldsCount(missingCount);
 
       // Update pie chart data based on codeExpectedUsageDecision
@@ -145,7 +146,7 @@ const Dashboard = () => {
 
 
 
-  const handleFileUpload = async (event) => {
+ /*  const handleFileUpload = async (event) => {
     const file = event.target.files[0];
     if (file) {
       try {
@@ -155,7 +156,7 @@ const Dashboard = () => {
 
         const total = sumBy(data, 'value');
         setTotalValue(total);
-        const missingCount = await getMissingFieldsCount();
+        const missingCount = await getMissingFieldsCountByPlantAndTeam();
         setMissingFieldsCount(missingCount);
 
         // Update pie chart data
@@ -172,7 +173,7 @@ const Dashboard = () => {
         console.error("Error importing file:", error);
       }
     }
-  };
+  }; */
 
   const handleImportClick = () => {
     fileInputRef.current.click();
@@ -230,7 +231,7 @@ const Dashboard = () => {
     {/* Expanded View of Teams (MCA, CAS, Stamping, UNO) */}
     {expandMainCard && (
       <Box display="grid" gridTemplateColumns="repeat(4, 1fr)" gap="20px">
-        {['MCA', 'CAS', 'Stamping', 'UNO'].map(team => (
+        {['MCA', 'CAS', 'Stamping', 'ADC'].map(team => (
           <Box
             key={team}
             backgroundColor={colors.primary[100]}
@@ -243,6 +244,7 @@ const Dashboard = () => {
               borderRadius: "8px",
               padding: "20px",
               boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
+              // height: '250px', // Fixed height for uniformity
             }}
           >
             <StatBox
@@ -254,31 +256,59 @@ const Dashboard = () => {
               <AddIcon />
             </IconButton>
 
-            {/* Enhanced Expanded View for Plants and Quality Inputs */}
-            {expandTeam[team] && (
-              <Box mt={2} display="grid" gridTemplateColumns="repeat(2, 1fr)" gap="35px">
-                {['Plant 1', 'Plant 2', 'Plant 3', 'Quality Inputs'].map(subItem => (
+
+        {/* Enhanced Expanded View for Teams Divided by Plants */}
+        {expandTeam[team] && (
+          <Box mt={2} display="grid" gridTemplateColumns="repeat(2, 1fr)" gap="20px">
+            {Array.from(new Set(blockedStockData
+              .filter(item => item.team === team)
+              .map(item => item.plant))) // Extract unique plants for each team
+              .map(plant => {
+                const plantData = blockedStockData.filter(item => item.team === team && item.plant === plant);
+                const plantValue = formatNumber(sumBy(plantData, 'value'));
+                const plantMissingFieldsCount = missingFieldsCount.find(p => p.plant === plant && p.team === team)?.missingFieldsCount || 0;
+
+                return (
                   <Box
-                    key={subItem}
+                    key={plant}
                     backgroundColor={colors.primary[200]} // Slightly different shade for visual distinction
                     p="20px"
-                    textAlign="center"
+                    display="flex" // Use flexbox for centering
+                    flexDirection="column"
+                    alignItems="center"
+                    justifyContent="center"
                     sx={{
                       borderRadius: "12px",
                       boxShadow: "0 6px 12px rgba(0, 0, 0, 0.15)", // Stronger shadow for visual pop
                       transform: "scale(1.05)", // Slight enlargement
                       transition: "transform 0.2s ease-in-out",
                       "&:hover": { transform: "scale(1.1)" },
+                      height: '150px', // Fixed height for uniformity
                     }}
                   >
-                    <Typography variant="h6" fontWeight="600" color={colors.orangeAccent[600]}>{subItem}</Typography>
-                    <Typography variant="h4" color={colors.orangeAccent[700]} sx={{ fontWeight: "bold", marginTop: "10px" }}>
-                      {formatNumber(sumBy(blockedStockData.filter(item => item.team === team && item.subItem === subItem), 'value'))}
+                    <Typography variant="h6" fontWeight="600" color={colors.orangeAccent[600]}>
+                      Plant {plant}
                     </Typography>
+                    <StatBox
+                      title={
+                        <div style={{ textAlign: 'center' }}> {/* Centering the content */}
+                          <span style={{ color: colors.orangeAccent[600] }}>
+                            {plantValue}
+                            <br /> {/* Line break added here */}
+                            <span style={{ fontSize: "14px", color: colors.grey[600] }}>
+                              ({plantMissingFieldsCount} missing fields)
+                            </span>
+                          </span>
+                        </div>
+                      }
+                    />
                   </Box>
-                ))}
-              </Box>
-            )}
+                );
+              })
+            }
+          </Box>
+        )}
+
           </Box>
         ))}
       </Box>
@@ -333,8 +363,8 @@ const Dashboard = () => {
 Blocked Stock Value per Quality Decision
 </Typography>
   </Box>
-  <Box display="flex" justifyContent="center" alignItems="center" height="250px" marginTop="40px">
-    <Box width="85%" height="110%">
+  <Box display="flex" justifyContent="center" alignItems="center" height="250px" marginTop="30px">
+    <Box width="90%" height="110%">
       <BarChart data={pieChartData} />
     </Box>
   </Box>

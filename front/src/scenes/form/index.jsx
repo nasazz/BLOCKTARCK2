@@ -209,6 +209,9 @@
           <Button type="submit" variant="contained" color="secondary">
             {userId ? 'Update User' : 'Register User'}
           </Button>
+          {/* <Button type="exit" variant="contained" color="primary">
+            {userId ? 'exit' : 'Register User'}
+          </Button> */}
         </form>
       </Box>
     );

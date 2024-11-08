@@ -2,11 +2,11 @@ import { ResponsivePie } from "@nivo/pie";
 import { tokens } from "../theme";
 import { useTheme } from "@mui/material";
 
-// Utility function to format numbers with the dollar sign at the end
+// Utility function to format numbers with the euro sign at the end
 const formatNumber = (value) => {
   return new Intl.NumberFormat('en-US', {
     style: 'decimal', // Use decimal format for number
-  }).format(value) + ' €'; // Append dollar sign
+  }).format(value) + ' €'; // Append euro sign
 };
 
 const PieChart = ({ data }) => {
@@ -58,12 +58,13 @@ const PieChart = ({ data }) => {
       arcLinkLabelsTextColor="#333333"
       arcLinkLabelsThickness={2}
       arcLinkLabelsColor={{ from: 'color' }}
-      enableArcLabels={false} // Disable arc labels
-      arcLabelsSkipAngle={10}
+      enableArcLabels={true} // Enable arc labels
       arcLabelsTextColor={{
         from: 'color',
-        modifiers: [['darker', 2]],
+        modifiers: [['darker', 9]],
       }}
+      arcLabel={(datum) => formatNumber(datum.value)} // Format the arc label
+      arcLabelsSkipAngle={10}
       
       // Custom tooltip to display formatted value
       tooltip={({ datum }) => (
@@ -77,9 +78,6 @@ const PieChart = ({ data }) => {
           <strong>{datum.label}</strong>: {formatNumber(datum.value)}
         </div>
       )}
-      
-      // Remove arc labels
-      arcLabel={null} // No arc labels
       
       defs={[
         {
@@ -101,31 +99,6 @@ const PieChart = ({ data }) => {
           spacing: 10,
         },
       ]}
-/*       legends={[
-        {
-          anchor: 'bottom',
-          direction: 'row',
-          justify: false,
-          translateX: 0,
-          translateY: 56,
-          itemsSpacing: 0,
-          itemWidth: 100,
-          itemHeight: 20,
-          itemTextColor: '#999',
-          itemDirection: 'left-to-right',
-          itemOpacity: 1,
-          symbolSize: 18,
-          symbolShape: 'circle',
-          effects: [
-            {
-              on: 'hover',
-              style: {
-                itemTextColor: '#000',
-              },
-            },
-          ],
-        },
-      ]} */
     />
   );
 };

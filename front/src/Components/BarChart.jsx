@@ -1,14 +1,15 @@
 import React from 'react';
 import { Bar } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js';
+import ChartDataLabels from 'chartjs-plugin-datalabels'; // Import the datalabels plugin
 
-ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
+ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ChartDataLabels); // Register the plugin
 
-// Utility function to format numbers with the dollar sign at the end
+// Utility function to format numbers with the euro sign at the end
 const formatNumber = (value) => {
   return new Intl.NumberFormat('en-US', {
     style: 'decimal', // Use decimal format for number
-  }).format(value) + ' €'; // Append dollar sign
+  }).format(value) + ' €'; // Append euro sign
 };
 
 const BarChart = ({ data }) => {
@@ -37,7 +38,6 @@ const BarChart = ({ data }) => {
       legend: {
         display: false, // Disable the legend display
       },
-    
       tooltip: {
         callbacks: {
           label: (context) => {
@@ -45,6 +45,13 @@ const BarChart = ({ data }) => {
             return [`Blocked Stock Value: ${formatNumber(value)}`]; // Format the tooltip value
           },
         },
+      },
+      // Configure the data labels plugin
+      datalabels: {
+        anchor: 'end',
+        align: 'end',
+        formatter: (value) => formatNumber(value), // Format the data label
+        color: 'black', // Set label color
       },
     },
   };

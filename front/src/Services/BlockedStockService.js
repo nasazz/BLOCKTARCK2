@@ -69,6 +69,18 @@ export const getMissingFieldsCount = async () => {
   }
 };
 
+// Function to get missing fields count by plant and team
+export const getMissingFieldsCountByPlantAndTeam = async () => {
+  try {
+    const response = await api.get('/BlockedStock/missing-fields-count-by-plant-and-team'); // Updated endpoint
+    return response.data; // Returns array of missing fields count by plant and team
+  } catch (error) {
+    console.error('Error fetching missing fields count by plant and team:', error);
+    throw error;
+  }
+};
+
+
 // Function to delete all blocked stock data
 export const deleteAllBlockedStockData = async () => {
   try {

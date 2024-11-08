@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
-import { Box, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
+import React, { useState, useEffect , useMemo} from 'react';
+import { Box, Typography, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
 import { DataGrid, GridToolbar } from '@mui/x-data-grid';
 import { useTheme } from '@mui/material/styles';
 import { tokens } from '../../theme';
 import Header from '../../Components/Header';
 import { getBlockedStockData, updateBlockedStock } from '../../Services/BlockedStockService';
+import EuroIcon from '@mui/icons-material/Euro';
 
 const functionBlockingOptions = [
   { value: 'L-Logistics', label: 'L-Logistics' },
@@ -44,6 +45,8 @@ const Contacts = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
   const [blockedStockData, setBlockedStockData] = useState([]);
+  const [filteredTotalValue, setFilteredTotalValue] = useState(0);
+
   const [columnVisibilityModel, setColumnVisibilityModel] = useState(() => {
     return JSON.parse(localStorage.getItem('columnVisibilityModel')) || {};
   });
@@ -87,6 +90,31 @@ useEffect(() => {
     setColumnVisibilityModel(savedVisibility);
   }
 }, []);
+// Calculate total value based on filter, or use all data if no filters
+const calculateFilteredTotal = (filteredRows) => {
+  const total = filteredRows.reduce((sum, row) => sum + (row.value || 0), 0);
+  setFilteredTotalValue(total);
+};
+
+// Memoize filtered data to update total when filters change
+const filteredData = useMemo(() => {
+  // Filter data based on filter model
+  const hasActiveFilters = filterModel.items.some(filter => filter.value);
+
+  const filteredRows = hasActiveFilters 
+    ? blockedStockData.filter((row) => {
+        return filterModel.items.every((filter) => {
+          const value = row[filter.columnField];
+          return value && filter.value ? value.toString().includes(filter.value.toString()) : false;
+        });
+      })
+    : blockedStockData;  // If no filters, use all data
+
+  // Calculate total based on whether filters are active
+  calculateFilteredTotal(filteredRows);
+  return filteredRows;
+}, [blockedStockData, filterModel]);
+
 
 
   const handleFunctionBlockingChange = async (id, newValue) => {
@@ -254,8 +282,44 @@ useEffect(() => {
   ];
 
   return (
-    <Box m="20px">
-      <Header title="BLOCKED STOCK" subtitle="List of The Blocked Stock" />
+    <Box m={2}>
+    <Header title="Blocked Stock" subtitle="Overview of blocked stock with dynamic total" />
+    
+
+ {/* Score Card for Total Value */}
+<Box
+  display="flex"
+  flexDirection="column" // Stack items vertically
+  alignItems="center"
+  justifyContent="center"
+  mx="left"
+  sx={{
+    maxWidth: "300px", // Reduce max width for a smaller card
+    borderRadius: "12px",
+    padding: "24px",
+    backgroundColor: colors.primary[100],
+    boxShadow: "0 6px 12px rgba(0, 0, 0, 0.15)",
+    marginBottom: "24px",
+    border: `1px solid ${colors.primary[400]}`,
+    textAlign: "center",
+  }}
+>
+   {/* Icon on top */}
+   {/* <EuroIcon sx={{ color: colors.orangeAccent[600], fontSize: "32px", marginBottom: "8px" }} /> */}
+
+{/* Title */}
+<Typography variant="h5" fontWeight="bold" fontSize="18px" color={colors.orangeAccent[600]}>
+  Total Blocked Stock Value:
+</Typography>
+
+{/* Value Display with Euro Sign */}
+<Typography variant="h5" fontWeight="600" fontSize="20px" color={colors.grey[900]} mt={1}>
+  {filteredTotalValue.toLocaleString()} € 
+</Typography>
+</Box>
+    
+  
+   
       <Box 
         m="40px 0 0 0" 
         height="75vh"
@@ -296,22 +360,29 @@ useEffect(() => {
           },
         }}
       >
-        <DataGrid
-          rows={blockedStockData}
-          columns={columns}
-          columnVisibilityModel={columnVisibilityModel} // Load visibility model
-          onColumnVisibilityModelChange={handleColumnVisibilityChange} // Save changes
-          filterModel={filterModel}
-          onFilterModelChange={handleFilterChange}
-          components={{ Toolbar: GridToolbar }}
-          getRowId={(row) => row.id}
-          autoHeight={false}
-          disableExtendRowFullWidth={true}
-          scrollbarSize={10}
-        />
-      </Box>
+        {/* DataGrid */}
+    <Box height={600}>
+      <DataGrid
+        rows={blockedStockData}
+        columns={columns}
+        components={{ Toolbar: GridToolbar }}
+        filterModel={filterModel}
+        onFilterModelChange={handleFilterChange}
+        autoHeight
+        getRowId={(row) => row.id}
+        autoHeight={false}
+        disableExtendRowFullWidth={true}
+        scrollbarSize={10}
+        disableSelectionOnClick
+        columnVisibilityModel={columnVisibilityModel}
+        onColumnVisibilityModelChange={(newModel) => {
+          setColumnVisibilityModel(newModel);
+          localStorage.setItem('columnVisibilityModel', JSON.stringify(newModel));
+        }}
+      />
     </Box>
-  );
+  </Box></Box>
+);
 };
 
 export default Contacts;

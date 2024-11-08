@@ -7,21 +7,21 @@ import NotificationsOutlinedIcon from "@mui/icons-material/NotificationsOutlined
 import Header from "../../Components/Header.jsx";
 import LineChart from "../../Components/LineChart";
 import StatBox from "../../Components/StatBox";
-import { importBlockedStockData, getBlockedStockData, getMissingFieldsCount, deleteAllBlockedStockData } from '../../Services/BlockedStockService';
+import { importBlockedStockData, getBlockedStockData, getMissingFieldsCountByPlantAndTeam, deleteAllBlockedStockData } from '../../Services/BlockedStockService';
 import { groupBy, sumBy } from 'lodash';
 import MockData from "../../data/mockData.js";
 import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
 import EuroIcon from '@mui/icons-material/Euro';
 import {useChartData}  from '../../ChartDataContext';
 import { DataGrid } from '@mui/x-data-grid';
-
+import AddIcon from '@mui/icons-material/Add';
 
 const formatNumber = (number) => {
   return new Intl.NumberFormat('de-DE').format(number);
 };
 
 // Conversion rate from your existing currency to euros (example: 1 USD = 0.85 EUR)
-const conversionRateToEuro = 0.85;
+const conversionRateToEuro = 0.92;
 
 const HOME = () => {
   const theme = useTheme();
@@ -32,6 +32,22 @@ const HOME = () => {
   const [totalValue, setTotalValue] = useState(0);
   const [missingFieldsCount, setMissingFieldsCount] = useState(0);
   const [userRole, setUserRole] = useState('');
+  const [expandMainCard, setExpandMainCard] = useState(false);
+  const [expandTeam, setExpandTeam] = useState({ MCA: false, CAS: false, Stamping: false, UNO: false });
+
+
+  const toggleMainCard = () => setExpandMainCard(!expandMainCard);
+  const toggleTeam = (team) => setExpandTeam(prev => ({ ...prev, [team]: !prev[team] }));
+
+
+  const [expandedRows, setExpandedRows] = useState({});
+
+  const toggleRowExpansion = (componentLabel) => {
+    setExpandedRows((prev) => ({
+      ...prev,
+      [componentLabel]: !prev[componentLabel],
+    }));
+  };
 
   useEffect(() => {
     const fetchUserRole = () => {
@@ -49,20 +65,42 @@ const HOME = () => {
     }
   }, []);
 
-  const fetchBlockedStockData = async () => {
+  const fetchBlockedStockData = async () => { 
     try {
-      const data = await getBlockedStockData();
-      setBlockedStockData(data);
+        const data = await getBlockedStockData();
+        const latestTimestamp = Math.floor(Number(localStorage.getItem('latestImportTimestamp')) / 1000); // Convert to seconds
+        const toleranceSeconds = 3600; // 1-hour tolerance range
 
-      const total = sumBy(data, 'value');
-      const totalInEuro = total * conversionRateToEuro; // Convert to euros
-      setTotalValue(totalInEuro); // Update the state with the euro value
+        console.log("Raw data:", data);
+        console.log("Latest timestamp from localStorage (seconds):", latestTimestamp);
 
-      setMissingFieldsCount(await getMissingFieldsCount());
+        // Filter data within the 1-hour range around the latest timestamp
+        const latestData = data.filter(item => {
+            const itemTimestamp = Math.floor(new Date(item.importTimestamp).getTime() / 1000); // Convert and round to seconds
+            console.log("Item timestamp:", item.importTimestamp, "Converted timestamp (seconds):", itemTimestamp);
+            return Math.abs(itemTimestamp - latestTimestamp) <= toleranceSeconds;
+        });
+
+        console.log("Filtered latest data:", latestData);
+
+        setBlockedStockData(latestData); // Set filtered data to state
+
+        // Calculate total based on the filtered latest data
+        const total = sumBy(latestData, 'value');
+        const totalInEuro = total * conversionRateToEuro; // Convert to euros
+        console.log("Total from latest data:", totalInEuro);
+        
+        // Update the state with the euro value
+        setTotalValue(totalInEuro); 
+
+        const missingCount = await getMissingFieldsCountByPlantAndTeam();
+        setMissingFieldsCount(missingCount);
     } catch (error) {
-      console.error("Error fetching blocked stock data:", error);
+        console.error("Error fetching blocked stock data:", error);
     }
-  };
+};
+
+
 
   const handleFileUpload = async (event) => {
     const file = event.target.files[0];
@@ -85,8 +123,10 @@ const HOME = () => {
 
           // Get the week number from the date
           const weekNumber = getWeekNumber(date); // You'll implement this function
-
-          await importBlockedStockData(file);
+          const timestamp = Date.now();
+          localStorage.setItem('latestImportTimestamp', timestamp);
+    
+          await importBlockedStockData(file); // Import without clearing previous data
           fetchBlockedStockData();
 
           // Reset chart data to the new total value
@@ -198,120 +238,136 @@ const HOME = () => {
         </Box>
       </Box>
 
-      {/* GRID & CHARTS */}
-      <Box
-        display="grid"
-        gridTemplateColumns="repeat(15, 4fr)"
-        gridAutoRows="140px"
-        gap="20px"
-      >
-        {/* ROW 1 */}
-        <Box
-          gridColumn="span 3"
-          backgroundColor={colors.primary[100]}
-          display="flex"
-          alignItems="center"
-          justifyContent="center"
-        >
-          <StatBox
-            title={
-              <span style={{ textAlign: 'center', display: 'block' }}>
-                <span style={{ color: colors.orangeAccent[600] }} >
-                   {formatNumber(totalValue)}
-                </span>
-              </span>
-            }
-            subtitle="Total Blocked Stock Value (EUR)"
-            icon={
-              <EuroIcon
-                sx={{ color: colors.orangeAccent[600], fontSize: "25px" }}
-              />
-            }
-          />
-        </Box>
+ {/* Main Total Blocked Stock Card */}
+ <Box
+      gridColumn="span 15"
+      gridRow="span 1"
+      backgroundColor={colors.primary[100]}
+      display="flex"
+      alignItems="center"
+      justifyContent="center"
+      position="relative"
+      onClick={toggleMainCard} // Add onClick to expand
+      sx={{
+        borderRadius: "8px",
+        padding: "20px",
+        boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
+        marginBottom: "20px",
+        cursor: 'pointer', // Change cursor to pointer
+      }}
+    >
+      <StatBox
+        title={<span style={{ color: colors.orangeAccent[600], fontSize: "45px" }}>{formatNumber(totalValue)}</span>}
+        subtitle="Total Blocked Stock"
+        icon={<EuroIcon sx={{ color: colors.orangeAccent[600], fontSize: "25px" }} />}
+      />
+    </Box>
 
-        <Box
-          gridColumn="span 3"
-          backgroundColor={colors.primary[100]}
-          display="flex"
-          alignItems="center"
-          justifyContent="center"
-        >
-          <StatBox
-            title={
-              <span style={{ textAlign: 'center', display: 'block' }}>
-                <span style={{ color: colors.orangeAccent[600] }}>
-                {formatNumber(sumBy(blockedStockData.filter(item => item.team === 'MCA'), 'value'))}
-                </span>
-              </span>
-            }
-            subtitle="Total MCA Team Blocked Stock"
-            icon={
-              <EuroIcon
-              sx={{ color: colors.orangeAccent[600], fontSize: "25px" }}
-            />
-            }
-          />
-        </Box>
-        
-        <Box
-          gridColumn="span 3"
-          backgroundColor={colors.primary[100]}
-          display="flex"
-          alignItems="center"
-          justifyContent="center"
-        >
-          <StatBox
-            title={
-              <span style={{ textAlign: 'center', display: 'block' }}>
-                <span style={{ color: colors.orangeAccent[600] }}>
-                {formatNumber(sumBy(blockedStockData.filter(item => item.team === 'CAS'), 'value'))}
-                </span>
-              </span>
-            }
-            subtitle="Total CAS Team Blocked Stock"
-            icon={
-              <EuroIcon
-                sx={{ color: colors.orangeAccent[600], fontSize: "25px" }}
-              />
-            }
-          />
-        </Box>
-        <Box gridColumn="span 3" backgroundColor={colors.primary[100]} display="flex" alignItems="center" justifyContent="center">
-          <StatBox
-            title={
-              <span style={{ textAlign: 'center', display: 'block' }}>
-                <span style={{ color: colors.orangeAccent[600] }}>
-                {formatNumber(sumBy(blockedStockData.filter(item => item.team === 'CAS'), 'value'))}
-                </span>
-              </span>
-            } 
-            subtitle="Total Stamping Team Blocked Stock"
-            icon={<EuroIcon
-              sx={{ color: colors.orangeAccent[600], fontSize: "25px" }}
-            />}
-          />
-        </Box>
-
+    {/* Expanded View of Teams (MCA, CAS, Stamping, UNO) */}
+    {expandMainCard && (
+      <Box display="grid" gridTemplateColumns="repeat(4, 1fr)" gap="20px">
+        {['MCA', 'CAS', 'Stamping', 'ADC'].map(team => (
           <Box
-            gridColumn="span 3"
+            key={team}
             backgroundColor={colors.primary[100]}
             display="flex"
+            flexDirection="column"
             alignItems="center"
             justifyContent="center"
+            position="relative"
+            sx={{
+              borderRadius: "8px",
+              padding: "20px",
+              boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
+              // height: '250px', // Fixed height for uniformity
+            }}
           >
             <StatBox
-              title={<span style={{ color: colors.orangeAccent[600] }}>{missingFieldsCount}</span>}
-              subtitle="Rows Missing Quality Fields"
-              icon={<NotificationsOutlinedIcon sx={{ color: colors.orangeAccent[600], fontSize: "26px" }} />}
+              title={<span style={{ color: colors.orangeAccent[600], fontSize: "30px" }}>{formatNumber(sumBy(blockedStockData.filter(item => item.team === team), 'value'))}</span>}
+              subtitle={`Total ${team} Team Blocked Stock`}
+              icon={<EuroIcon sx={{ color: colors.orangeAccent[600], fontSize: "25px" }} />}
             />
+            <IconButton onClick={() => toggleTeam(team)} style={{ position: 'absolute', top: '10px', right: '10px' }}>
+              <AddIcon />
+            </IconButton>
+
+
+        {/* Enhanced Expanded View for Teams Divided by Plants */}
+        {expandTeam[team] && (
+          <Box mt={2} display="grid" gridTemplateColumns="repeat(2, 1fr)" gap="20px">
+            {Array.from(new Set(blockedStockData
+              .filter(item => item.team === team)
+              .map(item => item.plant))) // Extract unique plants for each team
+              .map(plant => {
+                const plantData = blockedStockData.filter(item => item.team === team && item.plant === plant);
+                const plantValue = formatNumber(sumBy(plantData, 'value'));
+                const plantMissingFieldsCount = missingFieldsCount.find(p => p.plant === plant && p.team === team)?.missingFieldsCount || 0;
+
+                return (
+                  <Box
+                    key={plant}
+                    backgroundColor={colors.primary[200]} // Slightly different shade for visual distinction
+                    p="20px"
+                    display="flex" // Use flexbox for centering
+                    flexDirection="column"
+                    alignItems="center"
+                    justifyContent="center"
+                    sx={{
+                      borderRadius: "12px",
+                      boxShadow: "0 6px 12px rgba(0, 0, 0, 0.15)", // Stronger shadow for visual pop
+                      transform: "scale(1.05)", // Slight enlargement
+                      transition: "transform 0.2s ease-in-out",
+                      "&:hover": { transform: "scale(1.1)" },
+                      height: '150px', // Fixed height for uniformity
+                    }}
+                  >
+                    <Typography variant="h6" fontWeight="600" fontSize="16px" color={colors.orangeAccent[600]}>
+                      Plant {plant}
+                    </Typography>
+                    <StatBox
+                      title={
+                        <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                         <span style={{ color: colors.orangeAccent[600], fontSize: "1.1em", fontWeight: "bold" }}>
+                            {plantValue}
+                            </span>
+                                <span
+                                  style={{
+                                    fontSize: "14px",
+                                    color: colors.grey[600],
+                                  }}
+                                >               
+                              ({plantMissingFieldsCount} missing fields)
+                            </span>
+                          
+                        </div>
+                      }
+                    />
+                  </Box>
+                );
+              })
+            }
           </Box>
+        )}
+
+          </Box>
+        ))}
+      </Box>
+    )}
 
         {/* ROW 2 */}
+        <Box display="grid" gridTemplateColumns="repeat(12, 1fr)" gap="20px">
         <Box
           gridColumn="span 15"
           gridRow="span 2"
           backgroundColor={colors.primary[100]}
+          mt="25px"
+          mb="25px"
+          sx={{
+            borderRadius: "12px",
+            boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
+            transition: "transform 0.2s ease-in-out",
+            "&:hover": { transform: "scale(1.02)" },
+          }}
         >
           <Box
             mt="25px"
@@ -320,26 +376,24 @@ const HOME = () => {
             justifyContent="space-between"
             alignItems="center"
           >
-            <Box>
               <Typography
                 variant="h5"
                 fontWeight="600"
                 color={colors.orangeAccent[400]}
+                fontSize="19px"
               >
               Blocked Stock Value Evolution
               </Typography>
             </Box>
-            <Box>
-              <IconButton>
+              {/* <IconButton>
                 <DownloadOutlinedIcon
                   sx={{ fontSize: "26px", color: colors.orangeAccent[500] }}
                 />
-              </IconButton>
-            </Box>
-          </Box>
+              </IconButton> */}
+            
           <Box
             height="250px"
-            m="-20px 0 0 0"
+            m="-10px 0 0 0"
             display="flex" // Enables flexbox
             justifyContent="center" // Centers horizontally
             alignItems="center" // Centers vertically
@@ -352,42 +406,12 @@ const HOME = () => {
           </Box>
         </Box>
       </Box>
-          
-{/* 
-    <Box gridColumn="span 12" gridRow="span 2" backgroundColor={colors.primary[100]}  sx={{ marginTop: '30px' }}>
-      <DataGrid 
-        rows={rows} 
-        columns={columns} 
-        pageSize={5} 
-        rowsPerPageOptions={[5, 10, 20]} 
-        pagination 
-        autoHeight
-        sx={{
-          width: "100%",
-          borderRadius: 2,
-          overflow: 'hidden',
-          boxShadow: `0 4px 6px rgba(0, 0, 0, 0.1)`,
-          "& .MuiDataGrid-root": {
-            border: "none",
-          },
-          "& .MuiDataGrid-cell": {
-            borderBottom: `1px solid ${colors.grey[300]}`,
-            fontSize: '16px',
-          },
-          "& .MuiDataGrid-columnHeaders": {
-            backgroundColor: colors.orangeAccent[500],
-            borderBottom: `1px solid ${colors.grey[300]}`,
-            fontSize: '16px',
-          },
-          "& .MuiDataGrid-virtualScroller": {
-            backgroundColor: colors.primary[400],
-          },
-        }}
-      />
-    </Box> */}
+      </Box>
 
 
-    </Box>
+
+   
+
   );
 };
 
