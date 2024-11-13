@@ -22,7 +22,7 @@ const formatNumber = (number) => {
   return new Intl.NumberFormat('de-DE').format(number);
 };
 // Conversion rate from your existing currency to euros (example: 1 USD = 0.85 EUR)
-const conversionRateToEuro = 0.92;
+const conversionRateToEuro = 0.94;
 
 const Dashboard = () => {
   const theme = useTheme();
@@ -52,7 +52,22 @@ const Dashboard = () => {
       [componentLabel]: !prev[componentLabel],
     }));
   };
+  
+  const [expandedPlantRows, setExpandedPlantRows] = useState({});
+  const [expandedTeamRows, setExpandedTeamRows] = useState({});
+  const toggleTeamRowExpansion = (teamLabel) => {
+    setExpandedTeamRows((prev) => ({
+      ...prev,
+      [teamLabel]: !prev[teamLabel],
+    }));
+  };
 
+const togglePlantRowExpansion = (team, plant) => {
+  setExpandedPlantRows(prevState => ({
+    ...prevState,
+    [`${team}-${plant}`]: !prevState[`${team}-${plant}`]
+  }));
+};
 
   useEffect(() => {
     const fetchUserRole = () => {
@@ -72,10 +87,10 @@ const Dashboard = () => {
       // Get the user's team from local storage
       const userTeam = localStorage.getItem('userTeam');
       const userPlant = localStorage.getItem('userPlant');
+      const role = localStorage.getItem('userRole');
 
 
-      // Filter data based on user team
-      const filteredData = data.filter(item => 
+      const filteredData = role === 'admin' ? data : data.filter(item => 
         item.team === userTeam && item.plant === userPlant
       );
       const total = sumBy(data, 'value');
@@ -364,7 +379,7 @@ Blocked Stock Value per Quality Decision
 </Typography>
   </Box>
   <Box display="flex" justifyContent="center" alignItems="center" height="250px" marginTop="30px">
-    <Box width="90%" height="110%">
+    <Box  width="100%" height="110%">
       <BarChart data={pieChartData} />
     </Box>
   </Box>
@@ -389,7 +404,7 @@ Blocked Stock Value per Quality Decision
     </Typography>
   </Box>
   <Box display="flex" justifyContent="center" alignItems="center" height="250px" marginTop="40px">
-    <Box width="85%" height="110%">
+    <Box width="90%" height="110%">
       <BarChart data={pieChartDataByBlockingPeriod} />
     </Box>
   </Box>
@@ -410,46 +425,19 @@ Blocked Stock Value per Quality Decision
     "&:hover": { transform: "scale(1.02)" },
   }}
 >
-  <Box mt="25px" p="0 30px" display="flex" justifyContent="space-between" alignItems="center">
-    <Typography variant="h5" fontWeight="600" color={colors.orangeAccent[400]}>
-      Blocked Stock Value per Product Type
-    </Typography>
-  </Box>
-  <Box height="250px" marginTop="40px">
-    <PieChart data={pieChartDataByComponent} />
-  </Box>
-</Box>
-
-{/* Blocked Stock Matrix */}
-<Box
-  gridColumn="span 15"
-  gridRow="span 3"
-  backgroundColor={colors.primary[100]}
-  overflow="auto"
-  sx={{
-    borderRadius: "12px",
-    boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
-    transition: "transform 0.2s ease-in-out",
-    "&:hover": { transform: "scale(1.02)" },
-  }}
->
-  <Box mt="30px" p="0 30px" display="flex" justifyContent="space-between" alignItems="center">
-    <Typography variant="h5" fontWeight="600" color={colors.orangeAccent[400]}>
-      Blocked Stock Matrix
-    </Typography>
-  </Box>
-
-      
-      
-      
+<Box mt="30px" p="0 30px" display="flex" justifyContent="space-between" alignItems="center">
+        <Typography variant="h5" fontWeight="600" color={colors.orangeAccent[400]}>
+          Blocked Stock Matrix
+        </Typography>
+      </Box>
 
       <Box mt="5px" p="20px">
         <table style={{ width: '100%', textAlign: 'center', borderCollapse: 'collapse' }}>
           <thead>
             <tr>
               <th style={{ border: `1px solid ${colors.grey[300]}`, padding: '10px' }}>Component/FG</th>
-              {pieChartDataByBlockingPeriod.map((item) => (
-                <th key={item.id} style={{ border: `1px solid ${colors.grey[300]}`, padding: '10px' }}>{item.label}</th>
+              {pieChartDataByBlockingPeriod.map((period) => (
+                <th key={period.id} style={{ border: `1px solid ${colors.grey[300]}`, padding: '10px' }}>{period.label}</th>
               ))}
               <th style={{ border: `1px solid ${colors.grey[300]}`, padding: '10px' }}>Grand Total</th>
             </tr>
@@ -489,12 +477,12 @@ Blocked Stock Value per Quality Decision
                     </td>
                   </tr>
 
-                  {/* Team Data Row */}
+                  {/* Expanded Team Rows */}
                   {expandedRows[component.label] &&
                     Array.from(new Set(blockedStockData
                       .filter((item) => item.componentOrFG === component.label)
                       .map((item) => item.team)
-                    )).map((team, index) => {
+                    )).map((team) => {
                       const teamTotal = pieChartDataByBlockingPeriod.reduce((sum, period) => {
                         const filteredTeamData = blockedStockData.filter(
                           (item) =>
@@ -506,29 +494,79 @@ Blocked Stock Value per Quality Decision
                       }, 0);
 
                       return (
-                        <tr key={index}>
-                          <td style={{ border: `1px solid ${colors.grey[300]}`, padding: '10px', textAlign: 'left', paddingLeft: '30px' }}>
-                            {team}
-                          </td>
-                          {pieChartDataByBlockingPeriod.map((period) => {
-                            const filteredTeamData = blockedStockData.filter(
-                              (item) =>
-                                item.componentOrFG === component.label &&
-                                item.team === team &&
-                                item.blockingPeriodCluster === period.label
-                            );
-                            const teamCellValue = sumBy(filteredTeamData, 'value');
+                        <React.Fragment key={team}>
+                          <tr>
+                            <td style={{ border: `1px solid ${colors.grey[300]}`, padding: '10px', textAlign: 'left', paddingLeft: '30px' }}>
+                              <button onClick={() => toggleTeamRowExpansion(team)}>
+                                {expandedTeamRows[team] ? '-' : '+'}
+                              </button>
+                              {team}
+                            </td>
+                            {pieChartDataByBlockingPeriod.map((period) => {
+                              const filteredTeamData = blockedStockData.filter(
+                                (item) =>
+                                  item.componentOrFG === component.label &&
+                                  item.team === team &&
+                                  item.blockingPeriodCluster === period.label
+                              );
+                              const teamCellValue = sumBy(filteredTeamData, 'value');
 
-                            return (
-                              <td key={period.id} style={{ border: `1px solid ${colors.grey[300]}`, padding: '10px' }}>
-                                {teamCellValue.toFixed(2)}
-                              </td>
-                            );
-                          })}
-                          <td style={{ border: `1px solid ${colors.grey[300]}`, padding: '10px' }}>
-                            {teamTotal.toFixed(2)}
-                          </td>
-                        </tr>
+                              return (
+                                <td key={period.id} style={{ border: `1px solid ${colors.grey[300]}`, padding: '10px' }}>
+                                  {teamCellValue.toFixed(2)}
+                                </td>
+                              );
+                            })}
+                            <td style={{ border: `1px solid ${colors.grey[300]}`, padding: '10px' }}>
+                              {teamTotal.toFixed(2)}
+                            </td>
+                          </tr>
+
+                          {/* Expanded Plant Rows for Each Team */}
+                          {expandedTeamRows[team] &&
+                            Array.from(new Set(blockedStockData
+                              .filter((item) => item.componentOrFG === component.label && item.team === team)
+                              .map((item) => item.plant)
+                            )).map((plant) => {
+                              const plantTotal = pieChartDataByBlockingPeriod.reduce((sum, period) => {
+                                const filteredPlantData = blockedStockData.filter(
+                                  (item) =>
+                                    item.componentOrFG === component.label &&
+                                    item.team === team &&
+                                    item.plant === plant &&
+                                    item.blockingPeriodCluster === period.label
+                                );
+                                return sum + sumBy(filteredPlantData, 'value');
+                              }, 0);
+
+                              return (
+                                <tr key={plant}>
+                                  <td style={{ border: `1px solid ${colors.grey[300]}`, padding: '10px', textAlign: 'left', paddingLeft: '50px' }}>
+                                    {plant}
+                                  </td>
+                                  {pieChartDataByBlockingPeriod.map((period) => {
+                                    const filteredPlantData = blockedStockData.filter(
+                                      (item) =>
+                                        item.componentOrFG === component.label &&
+                                        item.team === team &&
+                                        item.plant === plant &&
+                                        item.blockingPeriodCluster === period.label
+                                    );
+                                    const plantCellValue = sumBy(filteredPlantData, 'value');
+
+                                    return (
+                                      <td key={period.id} style={{ border: `1px solid ${colors.grey[300]}`, padding: '10px' }}>
+                                        {plantCellValue.toFixed(2)}
+                                      </td>
+                                    );
+                                  })}
+                                  <td style={{ border: `1px solid ${colors.grey[300]}`, padding: '10px' }}>
+                                    {plantTotal.toFixed(2)}
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                        </React.Fragment>
                       );
                     })}
                 </React.Fragment>

@@ -34,6 +34,11 @@ const BarChart = ({ data }) => {
 
   const options = {
     responsive: true,
+    layout: {
+      padding: {
+        top: 20, // Add padding to give space for the labels at the top
+      },
+    },
     plugins: {
       legend: {
         display: false, // Disable the legend display
@@ -48,10 +53,23 @@ const BarChart = ({ data }) => {
       },
       // Configure the data labels plugin
       datalabels: {
-        anchor: 'end',
-        align: 'end',
+        anchor: 'end',       // Position the label at the end of the bar
+        align: 'top',        // Align the label to the top
+        offset: 10,          // Offset the label a bit to prevent clipping
+        clip: false,         // Allow the label to be displayed outside the chart
         formatter: (value) => formatNumber(value), // Format the data label
-        color: 'black', // Set label color
+        color: 'black',      // Set label color
+      },
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        max: Math.ceil(Math.max(...data.map(item => item.value)) * 1.2), // Add some buffer space above the max value
+        ticks: {
+          stepSize: 500, // Adjust this to control the y-axis interval
+          precision : 0,    
+          callback: (value) => formatNumber(value), // Format y-axis values with euro symbol
+        },
       },
     },
   };

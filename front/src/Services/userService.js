@@ -22,6 +22,15 @@ export const registerUser = async (userData) => {
         throw error; // Handle the error in the component
     }
 };
+// Register User by Name
+export const registerUserByName = async (userData) => {
+    try {
+        const response = await api.post('/User/register-by-name', userData);
+        return response.data; // { User, Token }
+    } catch (error) {
+        throw error; // Handle the error in the component
+    }
+};
 
 export const getUsers = async () => {
     try {

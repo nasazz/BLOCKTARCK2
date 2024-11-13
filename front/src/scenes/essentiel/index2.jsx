@@ -21,7 +21,7 @@ const formatNumber = (number) => {
 };
 
 // Conversion rate from your existing currency to euros (example: 1 USD = 0.85 EUR)
-const conversionRateToEuro = 0.92;
+const conversionRateToEuro = 0.94;
 
 const HOME = () => {
   const theme = useTheme();

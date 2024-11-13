@@ -1,7 +1,7 @@
   import React, { useEffect, useState } from 'react';
   import { useNavigate, useParams } from 'react-router-dom';
   import { Box, Button, TextField, MenuItem, Select, FormControl, InputLabel } from '@mui/material';
-  import { getUserById, registerUser, updateUser } from '../../Services/userService';
+  import { getUserById, registerUserByName, updateUser } from '../../Services/userService';
   import { fetchPlants, fetchDepartments, fetchTeams, fetchRoles } from '../../Services/configurationService'; // Ensure these service functions are correctly implemented
 
   const Form = () => {
@@ -92,7 +92,7 @@
           if (userId) {
               await updateUser(userId, userData);
           } else {
-              await registerUser(userData);
+              await registerUserByName(userData);
           }
           navigate('/team');
       } catch (error) {

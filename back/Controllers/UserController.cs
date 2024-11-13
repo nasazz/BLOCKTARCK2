@@ -86,6 +86,53 @@ namespace back.Controllers
             return Ok(new { User = user, Token = token });
         }
 
+
+[HttpPost("register-by-name")]
+public async Task<IActionResult> RegisterByName([FromBody] UserRegisterDto registerDto)
+{
+    try
+    {
+        // Fetch the entities by name
+        var plant = await _context.Plants.FirstOrDefaultAsync(p => p.Name == registerDto.Plant);
+        var department = await _context.Departments.FirstOrDefaultAsync(d => d.Name == registerDto.Department);
+        var team = await _context.Teams.FirstOrDefaultAsync(t => t.Name == registerDto.Team);
+        var role = await _roleManager.FindByNameAsync(registerDto.Role);
+
+        if (plant == null || department == null || team == null || role == null)
+            return BadRequest("Invalid references for Plant, Department, Team, or Role.");
+
+        var user = new User
+        {
+            UserName = registerDto.Email,
+            Email = registerDto.Email,
+            FullName = registerDto.FullName,
+            Plant = plant.Name, // Store the actual name
+            Department = department.Name, // Store the actual name
+            Team = team.Name, // Store the actual name
+            Role = role.Name // Store the actual name
+        };
+
+        var result = await _userManager.CreateAsync(user, registerDto.Password);
+        if (!result.Succeeded)
+            return BadRequest(result.Errors);
+
+        // Add the user to the specified role
+        await _userManager.AddToRoleAsync(user, role.Name);
+
+        // Generate a token for the registered user
+        var roles = await _userManager.GetRolesAsync(user);
+        var token = _tokenService.GenerateToken(user, roles);
+
+        return Ok(new { User = user, Token = token });
+    }
+    catch (Exception ex)
+    {
+        return StatusCode(500, "An error occurred while registering the user.");
+    }
+}
+
+
+
         [HttpGet]
         //[Authorize(Roles = "admin")]
         public async Task<IActionResult> GetUsers()

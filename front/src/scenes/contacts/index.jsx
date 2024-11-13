@@ -41,6 +41,9 @@ const scrapRequestOptions = [
   { value: 'A - Pending analysis', label: 'A - Pending analysis' }
 ];
 
+// Conversion rate from your existing currency to euros (example: 1 USD = 0.85 EUR)
+const conversionRateToEuro = 0.94;
+
 const Contacts = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
@@ -92,7 +95,7 @@ useEffect(() => {
 }, []);
 // Calculate total value based on filter, or use all data if no filters
 const calculateFilteredTotal = (filteredRows) => {
-  const total = filteredRows.reduce((sum, row) => sum + (row.value || 0), 0);
+  const total = filteredRows.reduce((sum, row) => sum + ((row.value || 0) * conversionRateToEuro), 0);
   setFilteredTotalValue(total);
 };
 
